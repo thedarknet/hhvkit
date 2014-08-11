@@ -1,0 +1,9 @@
+	Alice			Bob
+	0x		->	weAreBob()
+				proc
+	weAreAlice()	<-	0y
+			<-	0a
+	proc
+	0b		->
+	msg			msg
+	
