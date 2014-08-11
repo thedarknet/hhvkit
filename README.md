@@ -45,7 +45,8 @@ a whole bunch of chips.  If you're just burning your own chip, or are
 playing around with different code, you're better off just using the 
 Arduino IDE to program the board directly with an FTDI cable.
 
-== Preparation: GUIDs and private keys
+Preparation: GUIDs and private keys
+======
 The code is programmed to FLASH, but there are a few things needed in
 EEPROM before the badge is functional.  If you have a chip from us, it
 was already programmed with your GUID and private key, which will persist
