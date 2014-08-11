@@ -36,7 +36,6 @@ libraries/UsbKeyboard/
   delete it when you're done.
   [1] https://code.google.com/p/vusb-for-arduino/
 
-======
 Building and Burning
 ======
 
@@ -67,7 +66,8 @@ the chip, it just generates random numbers and formats them correctly.
 
 build$ ./buildDB.pl > DB
 
-== Preparation: Program
+Preparation: Program
+=======
 All the source code is compiled down into a .hex file by Arduino. Those
 who do more microcontroller work than I do can build this by hand.  I'm 
 lazy and let Arduino do all the drudgery for me.
@@ -83,7 +83,8 @@ build$ cp /tmp/build[some number].tmp/IR_Quest_2014.cpp.hex .
 
 You will have to do this EVERY TIME you build.
 
-== Burning Chips
+Burning Chips
+=======
 The burn-bootloader.sh script assumes you have a USBtinyISP [2].  You'll
 need to modify the avr-dude command if you have a different ISP.
 [2] http://www.adafruit.com/product/46
@@ -112,7 +113,8 @@ above.
 
 build$ ./burn-flash.sh
 
-== Automating the Build
+Automating the Build
+======
 I wasn't about to run these three commands manually for 350 chips, so 
 I wrote run.pl which pulls all the GUIDs from DB and cycles through 
 them.  If all is happy and working, you can just run.pl, hit enter to
