@@ -36,6 +36,7 @@ libraries/UsbKeyboard/
   delete it when you're done.
   [1] https://code.google.com/p/vusb-for-arduino/
 
+
 Building and Burning
 ======
 
@@ -125,3 +126,16 @@ as well as allows you to <N>ext and <P>rev through the DB list in case
 a burn goes awry and needs to be redone.
 
 build$ ./run.pl
+
+BOM and Assembly Instructions
+======
+
+The Bill of Materials is located here:
+
+https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=6bc2d848d8
+
+
+Assembly Instructions are located here:
+
+https://dcdark.net/2014-hhv-kit/
+
