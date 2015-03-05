@@ -139,3 +139,7 @@ Assembly Instructions are located here:
 
 https://dcdark.net/2014-hhv-kit/
 
+Public and private
+======
+
+We'll update private version until the time comes.  Then we can blanket mirror private to public using these instructions: https://help.github.com/articles/duplicating-a-repository/ (the second and third code examples for mirroring) to hhvkit, the public repo.
