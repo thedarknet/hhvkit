@@ -355,7 +355,13 @@ extern unsigned usbCrc16Append(unsigned data, uchar len);
  * bytes.
  */
 #if USB_CFG_HAVE_MEASURE_FRAME_LENGTH
+#ifdef __cplusplus
+extern "C"{
+#endif
 extern unsigned usbMeasureFrameLength(void);
+#ifdef __cplusplus
+} // extern "C"
+#endif
 /* This function MUST be called IMMEDIATELY AFTER USB reset and measures 1/7 of
  * the number of CPU cycles during one USB frame minus one low speed bit
  * length. In other words: return value = 1499 * (F_CPU / 10.5 MHz)

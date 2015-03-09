@@ -7,6 +7,7 @@
 //#define USB_PUBLIC static
 #include "UsbKeyboard.h"
 
+#define TV_B_GONE_REGION 13
 /*
  * Pinout:
  * 0, 1: FTDI serial header
@@ -33,9 +34,6 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 
 // Switch pin
 #define BUTTON_PIN 12
-
-// For TV-B-Gone region.
-#define TV_B_GONE_REGION 13
 
 // Backlight LEDs
 #define BACKLIGHT_4 5
@@ -99,6 +97,8 @@ unsigned char const morse[28] PROGMEM = {
    0x01,   // space     00000001
    0x5A,   // @  .--.-. 01011010
 };
+
+//extern void usbEventResetReady(void);
  
 unsigned long nextBeacon;
 
@@ -128,8 +128,6 @@ void delayAndReadIR(int pauseFor) {
       long buttonStart = millis();
       while(digitalRead(BUTTON_PIN) == LOW) {
         if (millis() - buttonStart > 2000) {
-          // Trigger TV-B-Gone!
-          tv_b_gone();
           buttonStart = 0;  // Flag to not dump USB
           break;
         }
@@ -662,13 +660,17 @@ void dumpDatabaseToUSB() {
   if (waitForHost(30000)) {
     Serial.println(F("USB is ready."));
     delay(100);
+    //Serial.println("back from delay");
     printUSB("https://dcdark.net/  Send the following codes:\n");
     printUSB("HHVUSB-");
     printUSB(GUID);
     printUSB("\n");
+    //Serial.println("back from printing");
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
       for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16) {
+        //DAC - adding because if there are enough messages the usb will lock up because update has not been called.
+        UsbKeyboard->update();
         sendUSBTwitter(msgAddr);
       }
       printUSB("\n");
@@ -709,6 +711,7 @@ void printUSB(const char *str) {
 }
 
 void writeUSB(char c) {
+  //Serial.println(c);
   //UsbKeyboard->update();
   
   // This if() block converts from ASCII to scan-codes.
@@ -786,10 +789,6 @@ void setup() {
   // Setup the USB TX button.
   pinMode(BUTTON_PIN, INPUT);
   digitalWrite(BUTTON_PIN, HIGH);  // Internal pull-up
-
-  // TV-B-Gone Region select
-  pinMode(TV_B_GONE_REGION, INPUT);
-  digitalWrite(TV_B_GONE_REGION, HIGH); // Internal pull-up, defaults to US
   
   delay(200);  // Reset "debounce"
 
@@ -933,3 +932,53 @@ void loop() {
     sendMorse('C');
   }
 }
+
+//////////////////////////////////////////
+// code to calibrate oscillator
+static void calibrateOscillator(void)
+{
+  Serial.print("before calibrate: ");Serial.println(OSCCAL);
+  uchar step = 128;
+  uchar trialValue = 0, optimumValue;
+  int   x, optimumDev, targetValue = (unsigned)(1499 * (double)F_CPU / 10.5e6 + 0.5);
+  //Serial.print("Target: " );Serial.println(targetValue);
+ 
+    /* do a binary search: */
+    do{
+        OSCCAL = trialValue + step;
+        x = usbMeasureFrameLength();    // proportional to current real frequency
+        //Serial.print("X: "); Serial.println(x);
+        //Serial.print("S: ");Serial.println(step);
+        //Serial.print("TV: ");Serial.println(trialValue);
+        //Serial.print("OS: ");Serial.println(OSCCAL);
+        if(x < targetValue)             // frequency still too low
+            trialValue += step;
+        step >>= 1;
+    }while(step > 0);
+    /* We have a precision of +/- 1 for optimum OSCCAL here */
+    /* now do a neighborhood search for optimum value */
+    optimumValue = trialValue;
+    //Serial.println(trialValue);
+    optimumDev = x; // this is certainly far away from optimum
+    for(OSCCAL = trialValue - 1; OSCCAL <= trialValue + 1; OSCCAL++){
+      //Serial.println(OSCCAL);
+        x = usbMeasureFrameLength() - targetValue;
+        if(x < 0)
+            x = -x;
+        if(x < optimumDev){
+            optimumDev = x;
+            optimumValue = OSCCAL;
+        }
+    }
+    OSCCAL = optimumValue;
+    Serial.print("after calibrate: ");Serial.println(OSCCAL);
+}
+
+void usbEventResetReady(void)
+{
+  cli();  // usbMeasureFrameLength() counts CPU cycles, so disable interrupts.
+  calibrateOscillator();
+  sei();
+   //eeprom_write_byte(0, OSCCAL);   // store the calibrated value in EEPROM
+}
+

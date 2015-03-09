@@ -177,6 +177,21 @@ section at the end of this file).
  * counts SOF packets. This feature requires that the hardware interrupt is
  * connected to D- instead of D+.
  */
+//////////////////////////////////////////////////////////////////////
+//cmd: 3-6-15 setting up reset hook so we can calibrate our clock
+#ifndef __ASSEMBLER__
+	#ifdef __cplusplus
+		extern "C"{
+	#endif
+			void usbEventResetReady(void);
+	#ifdef __cplusplus
+		}
+	#endif
+#endif
+#define USB_RESET_HOOK(isReset)         if(!isReset){usbEventResetReady();}
+#define USB_CFG_HAVE_MEASURE_FRAME_LENGTH   1
+/////////////////////////////////////////////////////////////////////
+
 /* #ifdef __ASSEMBLER__
  * macro myAssemblerMacro
  *     in      YL, TCNT0
@@ -204,7 +219,10 @@ section at the end of this file).
  * usbFunctionWrite(). Use the global usbCurrentDataToken and a static variable
  * for each control- and out-endpoint to check for duplicate packets.
  */
-#define USB_CFG_HAVE_MEASURE_FRAME_LENGTH   0
+//cmd: 3-6-15 - we are definting this above
+#ifndef USB_CFG_HAVE_MEASURE_FRAME_LENGTH 
+//	#define USB_CFG_HAVE_MEASURE_FRAME_LENGTH   0
+#endif
 /* define this macro to 1 if you want the function usbMeasureFrameLength()
  * compiled in. This function can be used to calibrate the AVR's RC oscillator.
  */
