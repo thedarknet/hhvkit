@@ -7,7 +7,6 @@
 //#define USB_PUBLIC static
 #include "UsbKeyboard.h"
 
-#define TV_B_GONE_REGION 13
 /*
  * Pinout:
  * 0, 1: FTDI serial header
@@ -976,6 +975,7 @@ static void calibrateOscillator(void)
 
 void usbEventResetReady(void)
 {
+  //Serial.println("usbEventReset");
   cli();  // usbMeasureFrameLength() counts CPU cycles, so disable interrupts.
   calibrateOscillator();
   sei();
