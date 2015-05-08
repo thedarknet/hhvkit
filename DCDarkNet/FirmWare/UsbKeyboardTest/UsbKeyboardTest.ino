@@ -2,7 +2,7 @@
 //UsbKeyboardDevice UsbKeyboard = UsbKeyboardDevice();
 
 #define BUTTON_PIN 12
-#define LED_PIN 10
+#define LED_PIN 3
 
 void setup() {
   pinMode(BUTTON_PIN, INPUT);
@@ -52,4 +52,8 @@ void loop() {
     usbDeviceDisconnect();
     digitalWrite(LED_PIN, LOW);
   }
+}
+
+void usbEventResetReady(void) {
+  
 }

@@ -97,7 +97,25 @@ unsigned char const morse[28] PROGMEM = {
    0x5A,   // @  .--.-. 01011010
 };
 
-//extern void usbEventResetReady(void);
+//debugging macros
+#define SERIAL_TRACE 
+#ifdef SERIAL_TRACE
+  #define SERIAL_TRACE_LN(a) Serial.println(a);
+  #define SERIAL_TRACE(a) Serial.println(a);
+#else
+  #define SERIAL_TRACE_LN(a)
+  #define SERIAL_TRACE(a)
+#endif
+
+#define SERIAL_INFO 
+#ifdef SERIAL_INFO
+  #define SERIAL_INFO_LN(a) Serial.println(a);
+  #define SERIAL_INFO(a) Serial.print(a);
+#else
+  #define SERIAL_INFO_LN(a)
+  #define SERIAL_INFO(a)
+#endif
+//end debugging macros
  
 unsigned long nextBeacon;
 
@@ -149,13 +167,12 @@ void delayAndReadIR(int pauseFor) {
 // to send another beacon.
 void beaconGUID(void) {
   if (millis() >= nextBeacon) {
-    Serial.print("Ping!");
+    SERIAL_INFO_LN(F("Ping!"));
     // Add a little randomness so devices don't get sync'd up.
     // Will beacon on average every 5 seconds.
     nextBeacon = millis() + random(4000, 6000);
     irSerial.print(F("0x"));
     irSerial.println(GUID);
-    Serial.println("");
   }
 }
 
@@ -632,6 +649,7 @@ UsbKeyboardDevice *UsbKeyboard;
 // the timer expired before it could find one.
 #define USB_UPDATE_EVERY 15
 bool waitForHost(long ms) {
+  SERIAL_TRACE_LN("waitForHost start");
   for (; ms > USB_UPDATE_EVERY; ms-=USB_UPDATE_EVERY) {
     delay(USB_UPDATE_EVERY);
     UsbKeyboard->update();
@@ -640,8 +658,21 @@ bool waitForHost(long ms) {
     }
   }
   delay(ms);
+  SERIAL_TRACE_LN("waitForHost failed");
   return usbInterruptIsReady();
 }
+
+#define USB_DELAY_INTERVAL 25
+void usbDelay(long ms) {
+  SERIAL_TRACE_LN("usbdelay start");
+  for (; ms > USB_DELAY_INTERVAL; ms-=USB_DELAY_INTERVAL) {
+    delay(USB_DELAY_INTERVAL);
+    UsbKeyboard->update();
+  }
+  delay(ms);
+  SERIAL_TRACE_LN("usbdelay end");
+}
+
 
 // Setus up a USB keyboard, outputs our database to it, then
 // disconnects again.  This way, we don't have to service USB
@@ -655,11 +686,13 @@ void dumpDatabaseToUSB() {
 
   UsbKeyboard = new UsbKeyboardDevice();
   
+  usbDelay(5000);
   // Give the USB a few seconds to settle in and be detected by the OS.
-  if (waitForHost(30000)) {
-    Serial.println(F("USB is ready."));
-    delay(100);
-    //Serial.println("back from delay");
+  //if (waitForHost(10000)) {
+  if(usbInterruptIsReady()) {
+    SERIAL_INFO_LN(F("USB is ready."));
+    usbDelay(100);
+    SERIAL_TRACE_LN("back from delay");
     printUSB("https://dcdark.net/  Send the following codes:\n");
     printUSB("HHVUSB-");
     printUSB(GUID);
@@ -668,21 +701,25 @@ void dumpDatabaseToUSB() {
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
       for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16) {
+        Serial.println(".");
         //DAC - adding because if there are enough messages the usb will lock up because update has not been called.
         UsbKeyboard->update();
         sendUSBTwitter(msgAddr);
       }
       printUSB("\n");
-    }
-    
+    } 
     // Give the USB a second to finalize the last characters.
-    waitForHost(1000);
+    usbDelay(1000);
+  } else {
+      Serial.println(F("USB Connect Failed"));
+      //TODO
+      //Should we flash LED PIN for a few seconds 
   }  
-  // TODO Signal someway that USB failed.
   
   // Clean up the USB and shut it down.
   usbDeviceDisconnect();
   delete UsbKeyboard;
+  UsbKeyboard = 0;
   digitalWrite(LED_PIN, LOW);
 }
 
@@ -936,7 +973,7 @@ void loop() {
 // code to calibrate oscillator
 static void calibrateOscillator(void)
 {
-  Serial.print("before calibrate: ");Serial.println(OSCCAL);
+  SERIAL_INFO("Before calibrate: ");SERIAL_INFO_LN(OSCCAL);
   uchar step = 128;
   uchar trialValue = 0, optimumValue;
   int   x, optimumDev, targetValue = (unsigned)(1499 * (double)F_CPU / 10.5e6 + 0.5);
@@ -970,7 +1007,7 @@ static void calibrateOscillator(void)
         }
     }
     OSCCAL = optimumValue;
-    Serial.print("after calibrate: ");Serial.println(OSCCAL);
+    SERIAL_INFO("After Calibrate: ");SERIAL_INFO_LN(OSCCAL);
 }
 
 void usbEventResetReady(void)
@@ -981,4 +1018,5 @@ void usbEventResetReady(void)
   sei();
    //eeprom_write_byte(0, OSCCAL);   // store the calibrated value in EEPROM
 }
+
 

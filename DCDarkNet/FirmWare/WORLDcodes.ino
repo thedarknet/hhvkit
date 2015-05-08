@@ -8816,3 +8816,4 @@ const struct IrCode * const EUpowerCodes[] PROGMEM = {
 const uint8_t num_NAcodes = NUM_ELEM(NApowerCodes);
 const uint8_t num_EUcodes = NUM_ELEM(EUpowerCodes);
 
+
