@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="6.6.0">
+<eagle version="7.2.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="yes"/>
@@ -8,20 +8,20 @@
 </settings>
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
-<layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
-<layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
-<layer number="19" name="Unrouted" color="6" fill="1" visible="no" active="no"/>
-<layer number="20" name="Dimension" color="15" fill="1" visible="no" active="no"/>
-<layer number="21" name="tPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="22" name="bPlace" color="7" fill="1" visible="no" active="no"/>
-<layer number="23" name="tOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="24" name="bOrigins" color="15" fill="1" visible="no" active="no"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="no"/>
-<layer number="27" name="tValues" color="7" fill="1" visible="no" active="no"/>
-<layer number="28" name="bValues" color="7" fill="1" visible="no" active="no"/>
+<layer number="1" name="Top" color="4" fill="1" visible="yes" active="no"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="no"/>
+<layer number="17" name="Pads" color="2" fill="1" visible="yes" active="no"/>
+<layer number="18" name="Vias" color="2" fill="1" visible="yes" active="no"/>
+<layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="no"/>
+<layer number="20" name="Dimension" color="15" fill="1" visible="yes" active="no"/>
+<layer number="21" name="tPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="no"/>
+<layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="no"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="no"/>
+<layer number="27" name="tValues" color="7" fill="1" visible="yes" active="no"/>
+<layer number="28" name="bValues" color="7" fill="1" visible="yes" active="no"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="no"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="no" active="no"/>
 <layer number="31" name="tCream" color="7" fill="4" visible="no" active="no"/>
@@ -30,8 +30,8 @@
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="no"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="no"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="no"/>
-<layer number="37" name="tTest" color="7" fill="1" visible="no" active="no"/>
-<layer number="38" name="bTest" color="7" fill="1" visible="no" active="no"/>
+<layer number="37" name="tTest" color="7" fill="1" visible="yes" active="no"/>
+<layer number="38" name="bTest" color="7" fill="1" visible="yes" active="no"/>
 <layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="no"/>
 <layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="no"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="no"/>
@@ -39,17 +39,17 @@
 <layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="no"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="no"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="no"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="no"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="no"/>
-<layer number="48" name="Document" color="7" fill="1" visible="no" active="no"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="no" active="no"/>
-<layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="no"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="no"/>
-<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
-<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
-<layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
-<layer number="57" name="tCAD" color="7" fill="1" visible="no" active="no"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="no"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="no"/>
+<layer number="48" name="Document" color="7" fill="1" visible="yes" active="no"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="no"/>
+<layer number="50" name="dxf" color="7" fill="1" visible="yes" active="no"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="no"/>
+<layer number="53" name="tGND_GNDA" color="7" fill="9" visible="yes" active="no"/>
+<layer number="54" name="bGND_GNDA" color="1" fill="9" visible="yes" active="no"/>
+<layer number="56" name="wert" color="7" fill="1" visible="yes" active="no"/>
+<layer number="57" name="tCAD" color="7" fill="1" visible="yes" active="no"/>
 <layer number="91" name="Nets" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="92" name="Busses" color="1" fill="1" visible="yes" active="yes"/>
 <layer number="93" name="Pins" color="2" fill="1" visible="no" active="yes"/>
@@ -176,6 +176,8 @@ We've spent an enormous amount of time creating and checking these footprints an
 <pad name="GND" x="12.7" y="0" drill="1.016" diameter="1.8796" rot="R90"/>
 <text x="1.1938" y="1.8288" size="1.27" layer="25" ratio="10">&gt;NAME</text>
 <text x="1.27" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
+<text x="0.635" y="1.905" size="1.27" layer="51" rot="R90">GRN</text>
+<text x="13.335" y="1.905" size="1.27" layer="51" rot="R90">BLK</text>
 <rectangle x1="12.446" y1="-0.254" x2="12.954" y2="0.254" layer="51"/>
 <rectangle x1="9.906" y1="-0.254" x2="10.414" y2="0.254" layer="51"/>
 <rectangle x1="7.366" y1="-0.254" x2="7.874" y2="0.254" layer="51"/>
@@ -193,8 +195,8 @@ We've spent an enormous amount of time creating and checking these footprints an
 <wire x1="-1.778" y1="0" x2="-2.54" y2="0" width="0.2032" layer="21"/>
 <wire x1="1.778" y1="0.762" x2="1.778" y2="0" width="0.2032" layer="21"/>
 <wire x1="-1.27" y1="0.635" x2="-1.27" y2="-0.635" width="0.2032" layer="21"/>
-<pad name="P$1" x="-3.556" y="0" drill="0.9" diameter="1.8796"/>
-<pad name="P$2" x="3.556" y="0" drill="0.9" diameter="1.8796"/>
+<pad name="P$1" x="-3.556" y="0" drill="0.9"/>
+<pad name="P$2" x="3.556" y="0" drill="0.9"/>
 <text x="-2.54" y="1.27" size="0.4064" layer="25">&gt;Name</text>
 <text x="-1.397" y="-0.508" size="0.4064" layer="21">&gt;Value</text>
 </package>
@@ -629,15 +631,15 @@ Basic small signal diode good up to 200mA. SMB footprint. Common part #: BAS16</
 <wire x1="1" y1="1" x2="2.4" y2="1" width="0.2032" layer="21"/>
 <wire x1="2.4" y1="1" x2="2.4" y2="-1" width="0.2032" layer="21"/>
 <wire x1="2.4" y1="-1" x2="1" y2="-1" width="0.2032" layer="21"/>
-<wire x1="0.3" y1="2.605" x2="0.3" y2="1.905" width="0.2032" layer="21"/>
-<wire x1="0.3" y1="1.905" x2="0.3" y2="1.205" width="0.2032" layer="21"/>
-<wire x1="0.3" y1="1.905" x2="-0.3" y2="2.505" width="0.2032" layer="21"/>
-<wire x1="-0.3" y1="2.505" x2="-0.3" y2="1.305" width="0.2032" layer="21"/>
-<wire x1="-0.3" y1="1.305" x2="0.3" y2="1.905" width="0.2032" layer="21"/>
+<wire x1="0.3" y1="0.7" x2="0.3" y2="0" width="0.2032" layer="21"/>
+<wire x1="0.3" y1="0" x2="0.3" y2="-0.7" width="0.2032" layer="21"/>
+<wire x1="0.3" y1="0" x2="-0.3" y2="0.6" width="0.2032" layer="21"/>
+<wire x1="-0.3" y1="0.6" x2="-0.3" y2="-0.6" width="0.2032" layer="21"/>
+<wire x1="-0.3" y1="-0.6" x2="0.3" y2="0" width="0.2032" layer="21"/>
 <smd name="A" x="-1.5" y="0" dx="1.2" dy="1.4" layer="1"/>
 <smd name="C" x="1.5" y="0" dx="1.2" dy="1.4" layer="1"/>
-<text x="-2.794" y="1.397" size="0.4064" layer="25">&gt;NAME</text>
-<text x="-2.6035" y="-1.778" size="0.4064" layer="27">&gt;VALUE</text>
+<text x="-0.889" y="1.397" size="0.4064" layer="25">&gt;NAME</text>
+<text x="-1.016" y="-1.778" size="0.4064" layer="27">&gt;VALUE</text>
 </package>
 <package name="LED-0603">
 <wire x1="0.46" y1="0.17" x2="0" y2="0.17" width="0.2032" layer="21"/>
@@ -3316,7 +3318,10 @@ Metric Code Size 5664</description>
 <text x="-1.27" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
 </package>
 <package name="1X1-SMALL">
-<pad name="P$1" x="0" y="0" drill="0.8128" diameter="1.4224"/>
+<pad name="P$1" x="0" y="0" drill="1.016" diameter="1.8796"/>
+</package>
+<package name="1X1-SMALL_CUT">
+<pad name="P$1" x="0" y="0" drill="1.016" diameter="1.6764" shape="square"/>
 </package>
 </packages>
 <symbols>
@@ -4238,6 +4243,14 @@ With round pins</description>
 </technologies>
 </device>
 <device name="1X1-SMALL" package="1X1-SMALL">
+<connects>
+<connect gate="G$1" pin="1" pad="P$1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="1X1_SQUARE" package="1X1-SMALL_CUT">
 <connects>
 <connect gate="G$1" pin="1" pad="P$1"/>
 </connects>
@@ -6245,6 +6258,7 @@ Standard 6 pin header for AVR programming</description>
 </variantdefs>
 <classes>
 <class number="0" name="default" width="0" drill="0">
+<clearance class="0" value="0.205"/>
 </class>
 </classes>
 <parts>
@@ -6272,7 +6286,7 @@ Standard 6 pin header for AVR programming</description>
 <part name="+3V1" library="supply1" deviceset="+3V3" device="" value="+3V"/>
 <part name="R4" library="SYNShop" deviceset="RESISTOR" device="AXIAL-0.3" value="68"/>
 <part name="R5" library="SYNShop" deviceset="RESISTOR" device="AXIAL-0.3" value="68"/>
-<part name="R6" library="SYNShop" deviceset="RESISTOR" device="AXIAL-0.3" value="2.2K"/>
+<part name="R6" library="SYNShop" deviceset="RESISTOR" device="AXIAL-0.3" value="1.5K"/>
 <part name="C1" library="adafruit" deviceset="C-US" device="025-030X050" value=".1uf"/>
 <part name="GND2" library="SparkFun" deviceset="GND" device=""/>
 <part name="C2" library="adafruit" deviceset="C-US" device="025-030X050" value=".1uf"/>
@@ -6288,44 +6302,44 @@ Standard 6 pin header for AVR programming</description>
 <part name="+3V7" library="supply1" deviceset="+3V3" device="" value="+3V"/>
 <part name="SW1" library="SYNShop" deviceset="SWITCH_TACTILE" device="TACTILE-2PIN" value=""/>
 <part name="GND7" library="SparkFun" deviceset="GND" device=""/>
-<part name="JP3" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP4" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP5" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP6" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP7" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP8" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP9" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP10" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP11" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP12" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP13" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP14" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP15" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP16" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP17" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP18" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP19" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP20" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP21" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP22" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP23" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP26" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP28" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP29" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP30" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP3" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP4" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP5" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP6" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP7" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP8" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP9" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP10" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP11" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP12" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP13" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP14" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP15" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP16" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP17" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP18" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP19" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP20" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP21" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP22" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP23" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP26" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP28" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP29" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP30" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="U$7" library="SYNShop" deviceset="KRUX_LOGO" device=""/>
 <part name="C3" library="adafruit" deviceset="C-US" device="025-030X050" value=".1uf"/>
 <part name="LED3" library="SparkFun" deviceset="LED" device="1206"/>
 <part name="LED4" library="SparkFun" deviceset="LED" device="1206"/>
 <part name="LED5" library="SparkFun" deviceset="LED" device="1206"/>
 <part name="LED6" library="SparkFun" deviceset="LED" device="1206"/>
-<part name="R7" library="SparkFun" deviceset="RESISTOR" device="0805-RES"/>
-<part name="R8" library="SparkFun" deviceset="RESISTOR" device="0805-RES"/>
-<part name="R9" library="SparkFun" deviceset="RESISTOR" device="0805-RES"/>
-<part name="R10" library="SparkFun" deviceset="RESISTOR" device="0805-RES"/>
+<part name="R7" library="SparkFun" deviceset="RESISTOR" device="1206"/>
+<part name="R8" library="SparkFun" deviceset="RESISTOR" device="1206"/>
+<part name="R9" library="SparkFun" deviceset="RESISTOR" device="1206"/>
+<part name="R10" library="SparkFun" deviceset="RESISTOR" device="1206"/>
 <part name="GND8" library="SparkFun" deviceset="GND" device=""/>
 <part name="U$1" library="SYNShop" deviceset="DN_LOGO" device=""/>
 <part name="U2" library="SYNShop" deviceset="VT1045C" device="TO262-H"/>
