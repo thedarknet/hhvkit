@@ -1,0 +1,3 @@
+Other Notes
+
+AVR Dragon connection guide for atmega328p: http://www.atmel.com/webdoc/avrdragon/avrdragon.SCKT3200A2.html
