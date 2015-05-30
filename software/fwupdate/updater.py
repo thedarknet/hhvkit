@@ -16,6 +16,9 @@ import os
 # Max number of '#' characters in progress bar
 AVRDUDE_PROGRESS_MAX = 50.0
 
+# PROGRAMMER = 'avrispmkII'
+PROGRAMMER = 'dragon_isp'
+
 # 
 # Strings that precede a progress bar in avrdude stderr output
 # along with the respective LCD string to display while this happens
@@ -106,13 +109,13 @@ def readFlash(debugPrint = False):
     filename = tempfile.gettempdir() + '/flash.bin'
     deleteFile(filename)
 
-    runAvrdudeCommand('avrdude -v -c avrispmkII -p m328p -P usb -U flash:r:' + filename + ':r', debugPrint)
+    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P usb -U flash:r:' + filename + ':r', debugPrint)
 
 def readEEPROM(debugPrint = False):
     filename = tempfile.gettempdir() + '/eeprom.bin'
     deleteFile(filename)
 
-    runAvrdudeCommand('avrdude -v -c avrispmkII -p m328p -P usb -U eeprom:r:' + filename + ':r', debugPrint)
+    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P usb -U eeprom:r:' + filename + ':r', debugPrint)
 
     if not os.path.isfile(filename):
         filename = None
@@ -122,11 +125,18 @@ def readEEPROM(debugPrint = False):
 # Test function to dump eeprom file
 def dumpEEPROM(filename):
     f = open(filename, "rb")
+    byteCount = 0
     try:
         byte = f.read(1)
         while byte != '':
+            byteCount += 1
             sys.stdout.write(hex(ord(byte[0])) + ' ')
+            if byteCount % 8 == 0:
+                sys.stdout.write('\n')
             byte = f.read(1)
+
+
+        sys.stdout.write('\n')
 
     finally:
         f.close()
@@ -142,14 +152,17 @@ lcd.write("DarkNet FWUpdate")
 # 
 # Do other stuff
 # 
-print("Reading flash")
-readFlash(True)
-print("Done reading flash")
-
 print("Reading EEPROM")
 eepromfile = readEEPROM(True);
 print("Done reading EEPROM")
 if eepromfile:
     dumpEEPROM(eepromfile)
+
+time.sleep(2) # The dragon doesn't like it when you try to re-connect too quickly
+
+print("Reading flash")
+readFlash(True)
+print("Done reading flash")
+
 
 lcd.disconnect()
