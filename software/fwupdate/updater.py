@@ -1,9 +1,10 @@
 #!/usr/bin/python
 # 
 # Test program to update DCDarkNet badges using avrdude
-# Right now it just reads the flash and eeprom using avrispmkII
-# but it will be able to program new badges and update old ones.
-# Still need to add support for AVRDragon and plain FTDI
+# Right now it just reads the flash and eeprom using 
+# avrispmkII, avr dragon isp, and FTDI(arduino)
+# 
+# NOTE: EEPROM data seems to be invalid while using FTDI/arduino bootloader
 # 
 import Adafruit_BBIO.GPIO as GPIO
 import SFLCDController
@@ -16,22 +17,25 @@ import os
 # Max number of '#' characters in progress bar
 AVRDUDE_PROGRESS_MAX = 50.0
 
-# PROGRAMMER = 'avrispmkII'
-PROGRAMMER = 'dragon_isp'
+# 
+# Supported programmers
+# 
+PROGRAMMERS = { 'avrispmkII': 'usb',
+                'dragon_isp': 'usb',
+                'arduino': '/dev/ttyUSB0'}
+
+PROGRAMMER = 'avrispmkII'
 
 # 
 # Strings that precede a progress bar in avrdude stderr output
 # along with the respective LCD string to display while this happens
 # 
-pbStrings = [
-    ['reading flash memory','Reading Flash'],
-    ['reading eeprom memory','Reading EEPROM']]
+pbStrings = [   ['reading flash memory','Reading Flash'],
+                ['reading eeprom memory','Reading EEPROM'] ]
 
-errorStrings = [
-    ['No such device', 'ERR: Programmer'],
-    ['did not find any USB device', 'ERR: Programmer'],
-    ['Target not detected', 'ERR: No Target'],
-    ]
+errorStrings = [    ['No such device', 'ERR: Programmer'],
+                    ['did not find any USB device', 'ERR: Programmer'],
+                    ['Target not detected', 'ERR: No Target'] ]
 
 def getStringWithArray(line, stringArray):
     for index in range(len(stringArray)):
@@ -109,13 +113,13 @@ def readFlash(debugPrint = False):
     filename = tempfile.gettempdir() + '/flash.bin'
     deleteFile(filename)
 
-    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P usb -U flash:r:' + filename + ':r', debugPrint)
+    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -U flash:r:' + filename + ':r', debugPrint)
 
 def readEEPROM(debugPrint = False):
     filename = tempfile.gettempdir() + '/eeprom.bin'
     deleteFile(filename)
 
-    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P usb -U eeprom:r:' + filename + ':r', debugPrint)
+    runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -U eeprom:r:' + filename + ':r', debugPrint)
 
     if not os.path.isfile(filename):
         filename = None
@@ -141,6 +145,16 @@ def dumpEEPROM(filename):
     finally:
         f.close()
 
+if len(sys.argv) < 2:
+    print("Usage: " + sys.argv[0] + " <programmer(" + ', '.join(PROGRAMMERS) + ")>")
+    sys.exit(0)
+
+if not sys.argv[1] in PROGRAMMERS:
+    print("Invalid programmer selected. Options are: " + ', '.join(PROGRAMMERS))
+    sys.exit(0)
+else:
+    PROGRAMMER = sys.argv[1]
+
 # 
 # Setup LCD
 # 
@@ -163,6 +177,5 @@ time.sleep(2) # The dragon doesn't like it when you try to re-connect too quickl
 print("Reading flash")
 readFlash(True)
 print("Done reading flash")
-
 
 lcd.disconnect()
