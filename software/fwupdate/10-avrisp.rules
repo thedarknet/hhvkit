@@ -1,0 +1,17 @@
+#
+# To install:
+# sudo ln -s $PWD/10-avrisp.rules /etc/udev/rules.d/
+# sudo udevadm control --reload
+#
+SUBSYSTEM!="usb_device", ACTION!="add", GOTO="avrisp_end"  
+
+# Atmel Corp.JTAG ICE mkII 
+ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2103", MODE="660", GROUP="dialout" 
+
+# Atmel Corp. AVRISP mkII
+ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2104", MODE="660", GROUP="dialout" 
+
+# Atmel Corp. Dragon
+ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="2107", MODE="660", GROUP="dialout"
+
+LABEL="avrisp_end"
