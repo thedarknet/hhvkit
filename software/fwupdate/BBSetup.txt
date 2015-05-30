@@ -1,0 +1,19 @@
+Some notes on setting up beaglebone for badge fw updates:
+
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install avrdude
+
+Install Adafruit_BBIO:
+https://learn.adafruit.com/setting-up-io-python-library-on-beaglebone-black/installation-on-ubuntu
+
+So root isn't needed for avrdude:
+sudo ln -s $PWD/10-avrisp.rules /etc/udev/rules.d/
+
+avrdude -v -c avrispmkII -p m328p -P usb
+avrdude -v -c avrispmkII -p m328p -P usb -U flash:r:flash.bin:r
+
+*run once in python as root*
+TODO - automate this
+import Adafruit_BBIO.UART as UART
+UART.setup("UART4")
