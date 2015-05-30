@@ -1,5 +1,6 @@
 #include <avr/pgmspace.h>
 #include "IRSerial-2014.h"
+#include "MD5.h"
 #include <EEPROM.h>
 #include <avr/sleep.h>
 
@@ -15,8 +16,13 @@
  * 3: Morse LED
  * 5, 6, 10, 11: Backlight LEDs
  * 12: Button
- * 13: TV-B-Gone region (high = US, low = EU)
- * A0-A5: Unused (HACK ME!)
+ * 16: Display board UP button
+ * 23: Display board RIGHT button
+ * 24: Display board CENTER (ENTER) button
+ * 25: Display Board DOWN button
+ * 26: Display Board LEFT button
+ * 27: SDA
+ * 28: SCL
  */
 
 // IR Parameters
@@ -40,27 +46,51 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 #define BACKLIGHT_2 10
 #define BACKLIGHT_1 11
 
-// Note that these get over-written by "-Dfoo" parameters to the compiler
-// and are made unique for every device.  At least, that's the theory. ;-)
-// If you're reading this source code, know that this is not the real 
-// private key for XSMITTYX.  If you program this, pair with it, and send
-// it to the Daemon, you won't get mad points for it.  However, if you 
-// pair with the REAL XSMITTYX, you just might. ;-)
-// 2014: No longer #defines. Moving these to EEPROM so the code can be
-// reprogrammed without losing your GUID and private key.
-//#define K0 0x0123
-//#define K1 0x4567
-//#define K2 0x89ab
-//#define K3 0xcdef
-//#define GUID "XSMITTYX"
+//BEGIN SERIAL EPIC VARS
+//string that starts serial epic
+#define START_SERIAL_EPIC_STRING "CMDC0DE"
+//length of serial string
+#define MIN_SERIAL_LEN  7
+//bool to see if we have started the SerialEpic
+#define MAX_SERIAL_EPIC_TIME_MS 30000
+#define STANDARD_SERIAL_EPIC 0
+#define MAX_SERIAL_ANSWER_LENGTH 10
+#define NUM_QUESTIONS 1
+
+struct _Questions {
+  const char * Text;
+  const char * Answer;
+};
+
+_Questions Questions[NUM_QUESTIONS]={
+    { "What is the answer to all things?","42" }
+};
+
+
+//END SERIAL EPIC VARS
+
+//BEGIN GLOBAL VARS:
+//We are getting tight on space so I'm packing variables as tightly as I can
+struct _PackedVars {
+  unsigned short InSerialEpic : 1;
+  unsigned short AwaitingSerialAnswer: 1;
+  unsigned short LEDMode : 3; //what start up mode are we need (animation)
+  unsigned short Silent : 1;
+} PackedVars;
+
 uint16_t KEY[4];
 char GUID[9];
+unsigned long nextBeacon;
+#define MOD_COUNT 5
 
-// EEPROM count location
+//END GLOBAL VARS
+
+// BEGIN EEPROM count location
 #define MSG_COUNT_ADDR 1022
 #define RESET_STATE_ADDR 1020
 #define GUID_ADDR 1012
 #define KEY_ADDR 1004
+// END EEPROM COUNT LOCATION
 
 // Maximum number of messages
 #define MAX_NUM_MSGS 60
@@ -117,7 +147,6 @@ unsigned char const morse[28] PROGMEM = {
 #endif
 //end debugging macros
  
-unsigned long nextBeacon;
 
 /* This is the workhorse function.  Whatever you do elsewhere,
  * When you're not working you need to call this so it looks
@@ -167,7 +196,9 @@ void delayAndReadIR(int pauseFor) {
 // to send another beacon.
 void beaconGUID(void) {
   if (millis() >= nextBeacon) {
-    SERIAL_INFO_LN(F("Ping!"));
+    if(PackedVars.Silent) {
+      SERIAL_INFO_LN(F("Ping!"));
+    }
     // Add a little randomness so devices don't get sync'd up.
     // Will beacon on average every 5 seconds.
     nextBeacon = millis() + random(4000, 6000);
@@ -787,9 +818,6 @@ void writeUSB(char c) {
   }
 }
 
-// What animation are we doing?
-unsigned char LEDMode;
-
 void setup() {
   // Setup various serial ports
   // Serial is used as a console.  It shows up on both the FTDI header
@@ -844,20 +872,27 @@ void setup() {
   KEY[2] = (EEPROM.read(KEY_ADDR+4)<<8) + EEPROM.read(KEY_ADDR+5);  
   KEY[3] = (EEPROM.read(KEY_ADDR+6)<<8) + EEPROM.read(KEY_ADDR+7);  
   
-  // BLINKY SHINY!  
-  LEDMode = EEPROM.read(RESET_STATE_ADDR)%4;
-  EEPROM.write(RESET_STATE_ADDR, (LEDMode + 1)%4);
+  //set initial Pack Vars
+  PackedVars.InSerialEpic = 0; // no serial received yet so we are not on serial epic
+  PackedVars.AwaitingSerialAnswer = 0; //no serial epic active yet so we don't have a state for it
 
-  if (LEDMode == 0) {        // Normal Morse code
+  // BLINKY SHINY!  
+  PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MOD_COUNT;
+  EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MOD_COUNT);  
+  
+  if (PackedVars.LEDMode == 0) {        // Normal Morse code
     Serial.println(F("Morse output of codes..."));
     sendMorse('E');          // .
-  } else if (LEDMode == 1) { // Snoring
+  } else if (PackedVars.LEDMode == 1) { // Snoring
     Serial.println(F("Snoring..."));
     sendMorse('I');          // ..
-  } else if (LEDMode == 2) { // Heartbeat
+  } else if (PackedVars.LEDMode == 2) { // Heartbeat
     Serial.println(F("Heart beat..."));
     sendMorse('S');          // ...
-  } else if (LEDMode == 3) { // Off
+  } else if (PackedVars.LEDMode == 3) { //epic
+    Serial.println(F("Operative"));
+    sendMorse('T');
+  } else if (PackedVars.LEDMode == 4) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
     // Except, ya know, do it while not listening for IR.
@@ -901,7 +936,8 @@ void rampLED(uchar ledStart, uchar ledEnd,
   int back2Diff = back2End-back2Start;
   int back3Diff = back3End-back3Start;
   int back4Diff = back4End-back4Start;
-  
+  //Serial.println("before while end time");
+  //Serial.println(endTime);
   while(millis() < endTime - stepTime) {
     long curTime = millis() - startTime;
     analogWrite(LED_PIN, ledStart+(ledDiff*curTime)/rampTime);
@@ -911,6 +947,7 @@ void rampLED(uchar ledStart, uchar ledEnd,
     analogWrite(BACKLIGHT_4, back4Start+(back4Diff*curTime)/rampTime);
     delayAndReadIR(stepTime);
   }
+  //Serial.println("after while");
   analogWrite(LED_PIN, ledEnd);
   analogWrite(BACKLIGHT_1, back1End);
   analogWrite(BACKLIGHT_2, back2End);
@@ -919,11 +956,35 @@ void rampLED(uchar ledStart, uchar ledEnd,
   delayAndReadIR(endTime-millis());
 }
 
-  
+void GenerateResponseToCorrectSerialEpic() {
+  //hash or encrypt answer with key?
+  MD5_CTX ctx;
+  MD5 hasher;
+  unsigned char Result[16];
+  hasher.MD5Init(&ctx);
+  hasher.MD5Update(&ctx,&KEY[0],sizeof(KEY));
+  hasher.MD5Update(&ctx,&GUID[0],sizeof(GUID));
+  hasher.MD5Final(&Result[0],&ctx);
+  Serial.println(F("The daemon will accept the following: " ));
+  for(int i=0;i<sizeof(Result);i++) {
+    Serial.print(Result[i],HEX); 
+  }
+  Serial.println("");
+}
+
+//drain all characters from serial buffer
+void drainSerial() {
+  while(Serial.available()>0) {
+    Serial.read();
+  }
+}
+
 void loop() {
   dumpDatabaseToSerial();  // Dump DB to serial
   uint32_t start;
-  if (LEDMode == 0) { // Normal Morse code
+ 
+  if (PackedVars.LEDMode == 0) { // Normal Morse code
+    Serial.println(F("Begin Mode: 0"));
     sendMorseStr("HHVMORSE DASH ");
     sendMorseStr(GUID);
     sendMorseStr("HTTPS COLON SLASH SLASH DCDARK DOT NET    SEND CODES");
@@ -934,8 +995,9 @@ void loop() {
         sendMorseTwitter(msgAddr);
       }
     }
-  } else if (LEDMode == 1) { // Snoring mode
+  } else if (PackedVars.LEDMode == 1) { // Snoring mode
     // Only dumpDatabaseToSerial() every 10th snore
+    Serial.println("Begin Mode: 1");
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
       start = millis();
       rampLED(0, 248, 0, 124, 0, 124, 0, 124, 0, 124, 1600);
@@ -943,8 +1005,9 @@ void loop() {
       beaconGUID();
       delayAndReadIR(5000-(millis()-start));
     }
-  } else if (LEDMode == 2) { // Heartbeat mode
+  } else if (PackedVars.LEDMode == 2) { // Heartbeat mode
     // Only dumpDatabaseToSerial() every 20 beats
+    Serial.println("Begin Mode: 2");
     for (unsigned char ndx = 0; ndx < 20; ndx++) {
       start = millis();
       // Lub
@@ -959,12 +1022,68 @@ void loop() {
       rampLED(0,   0,   0,   250, 250, 150, 250, 150, 0,   250, 120);
       rampLED(0,   0,   250, 150, 150, 50,  150, 50,  250, 150, 120);
       rampLED(0,   0,   150, 100, 50,  0,   50,  0,   150, 100, 300);
+      Serial.println("ramp 8");
       rampLED(0,   0,   100, 0,   0,   0,   0,   0,   100, 0,   500);
+      Serial.println("ramp 9");
       
       beaconGUID();
       delayAndReadIR(2000-(millis()-start));
     }
-  } else if (LEDMode == 3) { // We should never get here.  This is a sign we didn't sleep right.
+  } else if (PackedVars.LEDMode == 3) {
+    unsigned long SerialEpicTimer = millis();
+    Serial.println(F("Password: "));
+    while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
+      start = millis();
+      if(0==PackedVars.InSerialEpic) {
+        if( Serial.available()>0) { //are we trying to enter the serial epic?
+          if(Serial.available()==MIN_SERIAL_LEN) {
+            for(short n = 0; n<MIN_SERIAL_LEN;n++) {
+              char s = toupper(Serial.read());
+              if(s==START_SERIAL_EPIC_STRING[n]) {
+                PackedVars.InSerialEpic = 1;  
+              }
+            }
+          } else {
+            Serial.println(F("I know not what you speak of."));
+            PackedVars.InSerialEpic = 0;
+          }
+        }
+      } else {
+        if(0==PackedVars.AwaitingSerialAnswer) { //send question
+          Serial.println(Questions[STANDARD_SERIAL_EPIC].Text);
+          PackedVars.AwaitingSerialAnswer = 1;
+        } else {
+          if(Serial.available()) {
+            PackedVars.AwaitingSerialAnswer = 0;
+            if(Serial.available() == strlen(Questions[STANDARD_SERIAL_EPIC].Answer)) {
+              char serialAnswer[MAX_SERIAL_ANSWER_LENGTH+1] = {'\0'};
+              short i = 0;
+              while(Serial.available()) {
+                serialAnswer[i++] = Serial.read();
+              }
+              //Serial.println((char *)&serialAnswer[0]);
+              if(strcmp(Questions[STANDARD_SERIAL_EPIC].Answer,&serialAnswer[0])==0) {
+                GenerateResponseToCorrectSerialEpic();
+                break;
+              } else {
+                Serial.println(F("I know not what you speak of."));
+              }
+            } else {
+              Serial.println(F("I know not what you speak of."));
+            }
+          }
+        }
+      }
+      drainSerial();
+      beaconGUID();
+      delayAndReadIR(2000-(millis()-start));
+    }
+    if((millis()-SerialEpicTimer) >= MAX_SERIAL_EPIC_TIME_MS) {
+      Serial.println(F("Times up."));
+    }
+    PackedVars.InSerialEpic = 0;
+    PackedVars.AwaitingSerialAnswer = 0;
+  } else if (PackedVars.LEDMode == 4) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
 }
