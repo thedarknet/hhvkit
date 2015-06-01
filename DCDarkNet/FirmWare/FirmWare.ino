@@ -3,6 +3,10 @@
 #include "MD5.h"
 #include <EEPROM.h>
 #include <avr/sleep.h>
+//#include <Wire.h>
+//#include <SPI.h>
+//#include <Adafruit_GFX.h>
+//#include <Adafruit_SSD1306.h>
 
 // USB Keyboard port
 //#define USB_PUBLIC static
@@ -81,19 +85,38 @@ struct _PackedVars {
 uint16_t KEY[4];
 char GUID[9];
 unsigned long nextBeacon;
-#define MOD_COUNT 5
-
+#define OLED_RESET 4
+//Adafruit_SSD1306 Display(OLED_RESET);
 //END GLOBAL VARS
+
+
+//BEGIN MODE_DEFS
+#define MODE_COUNT 6
+#define MODE_MORSE_CODE_EPIC     0
+#define MODE_SNORING             1
+#define MODE_HEARTBEAT           2
+#define MODE_SERIAL_EPIC         3
+#define MODE_DISPLAY_BOARD_EPIC  4
+#define MODE_SHUTDOWN            5
+//END MODE DEFS
+
 
 // BEGIN EEPROM count location
 #define MSG_COUNT_ADDR 1022
 #define RESET_STATE_ADDR 1020
 #define GUID_ADDR 1012
 #define KEY_ADDR 1004
-// END EEPROM COUNT LOCATION
+#define PERSISTENT_EPIC_FLAG_ADDR 1000
 
 // Maximum number of messages
 #define MAX_NUM_MSGS 60
+#define GUID_SIZE 8
+#define MORSE_CODE_ENCODED_MSG 8
+#define TOTAL_STORAGE_SIZE_MSG (GUID_SIZE+MORSE_CODE_ENCODED_MSG)
+#define MAX_MSG_ADDR = (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS)
+
+
+// END EEPROM COUNT LOCATION
 
 // Morse Code constants
 unsigned char const morse[28] PROGMEM = {
@@ -321,7 +344,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
   
   int msgAddr;
   unsigned char ndx;
-  for (msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16) {
+  for (msgAddr = 0; msgAddr < numMsgs*TOTAL_STORAGE_SIZE_MSG; msgAddr+=TOTAL_STORAGE_SIZE_MSG) {
     for (ndx = 0; ndx < 8; ndx++) {
       if (guid[ndx] != EEPROM.read(msgAddr+ndx))
         break;
@@ -877,22 +900,35 @@ void setup() {
   PackedVars.AwaitingSerialAnswer = 0; //no serial epic active yet so we don't have a state for it
 
   // BLINKY SHINY!  
-  PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MOD_COUNT;
-  EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MOD_COUNT);  
+  PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
+  EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
+ 
   
-  if (PackedVars.LEDMode == 0) {        // Normal Morse code
+  #if 0
+    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
+  #endif
+  
+  if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
     Serial.println(F("Morse output of codes..."));
     sendMorse('E');          // .
-  } else if (PackedVars.LEDMode == 1) { // Snoring
+  } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
     Serial.println(F("Snoring..."));
     sendMorse('I');          // ..
-  } else if (PackedVars.LEDMode == 2) { // Heartbeat
+  } else if (PackedVars.LEDMode == MODE_HEARTBEAT) { // Heartbeat
     Serial.println(F("Heart beat..."));
     sendMorse('S');          // ...
-  } else if (PackedVars.LEDMode == 3) { //epic
+  } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
     Serial.println(F("Operative"));
     sendMorse('T');
-  } else if (PackedVars.LEDMode == 4) { // Off
+  } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
+    Serial.println(F("Uber Operative"));
+    sendMorse('D');
+    //Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    //Display.display();
+    //delay(1000);
+    //Display.fillCircle(Display.width()/2, Display.height()/2, 10, WHITE);
+    //Display.display();
+  } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
     // Except, ya know, do it while not listening for IR.
@@ -983,7 +1019,7 @@ void loop() {
   dumpDatabaseToSerial();  // Dump DB to serial
   uint32_t start;
  
-  if (PackedVars.LEDMode == 0) { // Normal Morse code
+  if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) { // Normal Morse code
     Serial.println(F("Begin Mode: 0"));
     sendMorseStr("HHVMORSE DASH ");
     sendMorseStr(GUID);
@@ -995,7 +1031,7 @@ void loop() {
         sendMorseTwitter(msgAddr);
       }
     }
-  } else if (PackedVars.LEDMode == 1) { // Snoring mode
+  } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring mode
     // Only dumpDatabaseToSerial() every 10th snore
     Serial.println("Begin Mode: 1");
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
@@ -1005,7 +1041,7 @@ void loop() {
       beaconGUID();
       delayAndReadIR(5000-(millis()-start));
     }
-  } else if (PackedVars.LEDMode == 2) { // Heartbeat mode
+  } else if (PackedVars.LEDMode == MODE_HEARTBEAT) { // Heartbeat mode
     // Only dumpDatabaseToSerial() every 20 beats
     Serial.println("Begin Mode: 2");
     for (unsigned char ndx = 0; ndx < 20; ndx++) {
@@ -1029,7 +1065,7 @@ void loop() {
       beaconGUID();
       delayAndReadIR(2000-(millis()-start));
     }
-  } else if (PackedVars.LEDMode == 3) {
+  } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
     unsigned long SerialEpicTimer = millis();
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
@@ -1083,7 +1119,10 @@ void loop() {
     }
     PackedVars.InSerialEpic = 0;
     PackedVars.AwaitingSerialAnswer = 0;
-  } else if (PackedVars.LEDMode == 4) { // We should never get here.  This is a sign we didn't sleep right.
+  } else if(PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
+    
+    
+  } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
 }
