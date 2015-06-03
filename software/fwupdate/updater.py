@@ -117,6 +117,11 @@ def readFlash(debugPrint = False):
 
     runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -U flash:r:' + filename + ':r', debugPrint)
 
+    if not os.path.isfile(filename):
+        filename = None
+
+    return filename
+
 def readEEPROM(debugPrint = False):
     filename = tempfile.gettempdir() + '/eeprom.bin'
     deleteFile(filename)
