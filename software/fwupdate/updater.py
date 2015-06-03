@@ -24,7 +24,7 @@ PROGRAMMERS = { 'avrispmkII': 'usb',
                 'dragon_isp': 'usb',
                 'arduino': '/dev/ttyUSB0'}
 
-PROGRAMMER = 'avrispmkII'
+PROGRAMMER = None
 
 # 
 # Strings that precede a progress bar in avrdude stderr output
@@ -103,6 +103,8 @@ def runAvrdudeCommand(command, debugPrint = False):
                 if line != '':
                     print(line.rstrip())
 
+    return proc.returncode
+
 def deleteFile(filename):
     try:
         os.remove(filename)
@@ -145,6 +147,9 @@ def dumpEEPROM(filename):
     finally:
         f.close()
 
+# 
+# Start Here!
+# 
 if len(sys.argv) < 2:
     print("Usage: " + sys.argv[0] + " <programmer(" + ', '.join(PROGRAMMERS) + ")>")
     sys.exit(0)
@@ -172,7 +177,9 @@ print("Done reading EEPROM")
 if eepromfile:
     dumpEEPROM(eepromfile)
 
-time.sleep(2) # The dragon doesn't like it when you try to re-connect too quickly
+if PROGRAMMER == 'dragon_isp':
+    # The dragon doesn't like it when you try to re-connect too quickly
+    time.sleep(2)
 
 print("Reading flash")
 readFlash(True)
