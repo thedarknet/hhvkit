@@ -154,6 +154,11 @@ def dumpEEPROM(filename):
     finally:
         f.close()
 
+def dragonWait():
+    # The dragon doesn't like it when you try to re-connect too quickly
+    if PROGRAMMER == 'dragon_isp':
+        time.sleep(2)
+
 def modeReadFlash():
     print("Reading flash")
     flashFile = readFlash(DEBUG)
@@ -175,9 +180,7 @@ def modeReadEEPROM():
 def modeReadAll():
     modeReadFlash()
 
-    # The dragon doesn't like it when you try to re-connect too quickly
-    if PROGRAMMER == 'dragon_isp':
-        time.sleep(2)
+    dragonWait()
 
     modeReadEEPROM()
 
@@ -235,9 +238,7 @@ if not sys.argv[1] in PROGRAMMERS:
             print("Could not find connected device")
             sys.exit(1)
         
-        # The dragon doesn't like it when you try to re-connect too quickly
-        if PROGRAMMER == 'dragon_isp':
-            time.sleep(2)
+        dragonWait()
     else:
         print("Supported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(PROGRAMMERS) + "")
         sys.exit(1)
