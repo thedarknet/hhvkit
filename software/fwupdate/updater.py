@@ -150,9 +150,10 @@ def dumpEEPROM(filename):
 # 
 # Start Here!
 # 
-if len(sys.argv) < 2:
-    print("Usage: " + sys.argv[0] + " <programmer(" + ', '.join(PROGRAMMERS) + ")>")
-    sys.exit(0)
+if len(sys.argv) < 3:
+    print("Usage: " + sys.argv[0] + " <programmer> <mode>")
+    print("\nSupported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(PROGRAMMERS) + "")
+    sys.exit(1)
 
 # 
 # Setup LCD
@@ -178,14 +179,14 @@ if not sys.argv[1] in PROGRAMMERS:
 
         if PROGRAMMER == None:
             print("Could not find connected device")
-            sys.exit(0)
+            sys.exit(1)
         
-        if PROGRAMMER == 'dragon_isp':
             # The dragon doesn't like it when you try to re-connect too quickly
+        if PROGRAMMER == 'dragon_isp':
             time.sleep(2)
     else:
-        print("Invalid programmer selected. Options are: " + ', '.join(PROGRAMMERS))
-        sys.exit(0)
+        print("Supported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(PROGRAMMERS) + "")
+        sys.exit(1)
 else:
     PROGRAMMER = sys.argv[1]
 
