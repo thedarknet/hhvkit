@@ -154,12 +154,6 @@ if len(sys.argv) < 2:
     print("Usage: " + sys.argv[0] + " <programmer(" + ', '.join(PROGRAMMERS) + ")>")
     sys.exit(0)
 
-if not sys.argv[1] in PROGRAMMERS:
-    print("Invalid programmer selected. Options are: " + ', '.join(PROGRAMMERS))
-    sys.exit(0)
-else:
-    PROGRAMMER = sys.argv[1]
-
 # 
 # Setup LCD
 # 
@@ -167,6 +161,33 @@ lcd = SFLCDController.Controller()
 lcd.connect( "/dev/ttyO4", 9600)
 lcd.clear()
 lcd.write("DarkNet FWUpdate")
+
+if not sys.argv[1] in PROGRAMMERS:
+    if sys.argv[1] == 'auto':
+        print('Searching all supported programmers for device')
+        for key in PROGRAMMERS.keys():
+            print("Checking " + key)
+
+            returnCode = runAvrdudeCommand('avrdude -v -c ' + key + ' -p m328p -P ' + PROGRAMMERS[key], False)
+
+            # We'll use the first one we find
+            if returnCode == 0:
+                print("Looks good!")
+                PROGRAMMER = key
+                break
+
+        if PROGRAMMER == None:
+            print("Could not find connected device")
+            sys.exit(0)
+        
+        if PROGRAMMER == 'dragon_isp':
+            # The dragon doesn't like it when you try to re-connect too quickly
+            time.sleep(2)
+    else:
+        print("Invalid programmer selected. Options are: " + ', '.join(PROGRAMMERS))
+        sys.exit(0)
+else:
+    PROGRAMMER = sys.argv[1]
 
 # 
 # Do other stuff
