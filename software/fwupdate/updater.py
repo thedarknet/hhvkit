@@ -26,6 +26,8 @@ PROGRAMMERS = { 'avrispmkII': 'usb',
 
 PROGRAMMER = None
 
+DEBUG = False
+
 # 
 # Strings that precede a progress bar in avrdude stderr output
 # along with the respective LCD string to display while this happens
@@ -152,12 +154,48 @@ def dumpEEPROM(filename):
     finally:
         f.close()
 
+def modeReadFlash():
+    print("Reading flash")
+    flashFile = readFlash(DEBUG)
+    if flashFile:
+        print("Flash dumped to: " + flashFile)
+    else:
+        print("Error reading flash")
+
+def modeReadEEPROM():
+    print("Reading EEPROM")
+    eepromFile = readEEPROM(DEBUG);
+    print("EEPROM dumped to: " + eepromFile)
+    if eepromFile:
+        if DEBUG:
+            dumpEEPROM(eepromFile)
+    else:
+        print("Error reading EEPROM")
+
+def modeReadAll():
+    modeReadFlash()
+
+    # The dragon doesn't like it when you try to re-connect too quickly
+    if PROGRAMMER == 'dragon_isp':
+        time.sleep(2)
+
+    modeReadEEPROM()
+
+MODES = {   'readFlash': modeReadFlash,
+            'readEEPROM': modeReadEEPROM,
+            'readAll': modeReadAll,
+            'flashBootloader': None,
+            'flashFW': None,
+            'flashEEPROM': None,
+            'updateFW': None}
+
 # 
 # Start Here!
 # 
 if len(sys.argv) < 3:
     print("Usage: " + sys.argv[0] + " <programmer> <mode>")
     print("\nSupported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(PROGRAMMERS) + "")
+    print("\nSupported Modes:\n    " + '\n    '.join(MODES) + "")
     sys.exit(1)
 
 # 
@@ -167,6 +205,17 @@ lcd = SFLCDController.Controller()
 lcd.connect( "/dev/ttyO4", 9600)
 lcd.clear()
 lcd.write("DarkNet FWUpdate")
+
+# 
+# Validate user input
+# 
+if not sys.argv[2] in MODES:
+    print("Unsupported mode '" + sys.argv[2] + "'")
+    print("Supported Modes:\n    " + '\n    '.join(MODES) + "")
+    sys.exit(1)
+elif MODES[sys.argv[2]] == None:
+    print("Mode '" + sys.argv[2] + "' not yet implemented")
+    sys.exit(1)
 
 if not sys.argv[1] in PROGRAMMERS:
     if sys.argv[1] == 'auto':
@@ -186,7 +235,7 @@ if not sys.argv[1] in PROGRAMMERS:
             print("Could not find connected device")
             sys.exit(1)
         
-            # The dragon doesn't like it when you try to re-connect too quickly
+        # The dragon doesn't like it when you try to re-connect too quickly
         if PROGRAMMER == 'dragon_isp':
             time.sleep(2)
     else:
@@ -196,20 +245,8 @@ else:
     PROGRAMMER = sys.argv[1]
 
 # 
-# Do other stuff
+# Do the thing!
 # 
-print("Reading EEPROM")
-eepromfile = readEEPROM(True);
-print("Done reading EEPROM")
-if eepromfile:
-    dumpEEPROM(eepromfile)
-
-if PROGRAMMER == 'dragon_isp':
-    # The dragon doesn't like it when you try to re-connect too quickly
-    time.sleep(2)
-
-print("Reading flash")
-readFlash(True)
-print("Done reading flash")
+MODES[sys.argv[2]]()
 
 lcd.disconnect()
