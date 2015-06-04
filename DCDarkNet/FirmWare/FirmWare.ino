@@ -91,13 +91,12 @@ unsigned long nextBeacon;
 
 
 //BEGIN MODE_DEFS
-#define MODE_COUNT 6
+#define MODE_COUNT 5
 #define MODE_MORSE_CODE_EPIC     0
 #define MODE_SNORING             1
-#define MODE_HEARTBEAT           2
-#define MODE_SERIAL_EPIC         3
-#define MODE_DISPLAY_BOARD_EPIC  4
-#define MODE_SHUTDOWN            5
+#define MODE_SERIAL_EPIC         2
+#define MODE_DISPLAY_BOARD_EPIC  3
+#define MODE_SHUTDOWN            4
 //END MODE DEFS
 
 
@@ -904,7 +903,7 @@ void setup() {
   EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
  
   
-  #if 0
+  #if 1
     PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
   #endif
   
@@ -914,9 +913,6 @@ void setup() {
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
     Serial.println(F("Snoring..."));
     sendMorse('I');          // ..
-  } else if (PackedVars.LEDMode == MODE_HEARTBEAT) { // Heartbeat
-    Serial.println(F("Heart beat..."));
-    sendMorse('S');          // ...
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
     Serial.println(F("Operative"));
     sendMorse('T');
@@ -1032,24 +1028,13 @@ void loop() {
       }
     }
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring mode
-    // Only dumpDatabaseToSerial() every 10th snore
-    Serial.println("Begin Mode: 1");
+    Serial.println(F("Begin Mode: 1"));
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
       start = millis();
       rampLED(0, 248, 0, 124, 0, 124, 0, 124, 0, 124, 1600);
       rampLED(248, 0, 124, 0, 124, 0, 124, 0, 124, 0, 1600);
       beaconGUID();
       delayAndReadIR(5000-(millis()-start));
-    }
-  } else if (PackedVars.LEDMode == MODE_HEARTBEAT) { // Heartbeat mode
-    // Only dumpDatabaseToSerial() every 20 beats
-    Serial.println("Begin Mode: 2");
-    for (unsigned char ndx = 0; ndx < 20; ndx++) {
-      start = millis();
-      // Lub
-      rampLED(0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 60);
-      rampLED(200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120);
-      delayAndReadIR(200);
       
       // Dub
       //      LED  LED  BACK 1    BACK 2    BACK 3    BACK 4
@@ -1058,12 +1043,11 @@ void loop() {
       rampLED(0,   0,   0,   250, 250, 150, 250, 150, 0,   250, 120);
       rampLED(0,   0,   250, 150, 150, 50,  150, 50,  250, 150, 120);
       rampLED(0,   0,   150, 100, 50,  0,   50,  0,   150, 100, 300);
-      Serial.println("ramp 8");
+      //todo check to see if this one still cashes crash every once in a while
       rampLED(0,   0,   100, 0,   0,   0,   0,   0,   100, 0,   500);
-      Serial.println("ramp 9");
       
       beaconGUID();
-      delayAndReadIR(2000-(millis()-start));
+      delayAndReadIR(5000-(millis()-start));
     }
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
     unsigned long SerialEpicTimer = millis();

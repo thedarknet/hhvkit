@@ -56,8 +56,11 @@ typedef struct _DELAY_TABLE
 
 #if F_CPU == 16000000
 
+//#define ALLOW_ALL_SPEEDS
+// CMDCODE 6/4/15: removing unused speeds to save memory
 static const DELAY_TABLE PROGMEM table[] = 
 {
+#ifdef ALLOW_ALL_SPEEDS
   //  baud    rxcenter   rxintra    rxstop    tx
   { 115200,   1,         17,        17,       12,    },
   { 57600,    10,        37,        37,       33,    },
@@ -70,6 +73,7 @@ static const DELAY_TABLE PROGMEM table[] =
   { 4800,     233,       474,       474,      471,   },
   { 2400,     471,       950,       950,      947,   },
   { 1200,     947,       1902,      1902,     1899,  },
+#endif
   { 300,      3804,      7617,      7617,     7614,  },
 };
 
@@ -79,6 +83,7 @@ const int XMIT_START_ADJUSTMENT = 5;
 
 static const DELAY_TABLE table[] PROGMEM = 
 {
+#ifdef ALLOW_ALL_SPEEDS
   //  baud    rxcenter    rxintra    rxstop  tx
   { 115200,   1,          5,         5,      3,      },
   { 57600,    1,          15,        15,     13,     },
@@ -91,6 +96,7 @@ static const DELAY_TABLE table[] PROGMEM =
   { 4800,     110,        233,       233,    230,    },
   { 2400,     229,        472,       472,    469,    },
   { 1200,     467,        948,       948,    945,    },
+#endif
   { 300,      1895,       3805,      3805,   3802,   },
 };
 
@@ -104,6 +110,7 @@ const int XMIT_START_ADJUSTMENT = 4;
 static const DELAY_TABLE PROGMEM table[] =
 {
   //  baud    rxcenter    rxintra    rxstop  tx
+#ifdef ALLOW_ALL_SPEEDS
   { 115200,   3,          21,        21,     18,     },
   { 57600,    20,         43,        43,     41,     },
   { 38400,    37,         73,        73,     70,     },
@@ -115,6 +122,7 @@ static const DELAY_TABLE PROGMEM table[] =
   { 4800,     296,        595,       595,    592,    },
   { 2400,     592,        1189,      1189,   1186,   },
   { 1200,     1187,       2379,      2379,   2376,   },
+#endif
   { 300,      4759,       9523,      9523,   9520,   },
 };
 
