@@ -33,7 +33,8 @@ DEBUG = False
 # along with the respective LCD string to display while this happens
 # 
 pbStrings = [   ['reading flash memory','Reading Flash'],
-                ['reading eeprom memory','Reading EEPROM'] ]
+                ['reading eeprom memory','Reading EEPROM'],
+                ['reading on-chip flash data','Verify Flash'] ]
 
 errorStrings = [    ['No such device', 'ERR: Programmer'],
                     ['did not find any USB device', 'ERR: Programmer'],
@@ -81,9 +82,11 @@ def runAvrdudeCommand(command, debugPrint = False):
             # Progress bar is updating!
             if char == '#':
                 hashCount += 1
+                # Only update every other hash (since lcd is so slow)
+                if hashCount % 2 == 0:   
                 progress = hashCount / AVRDUDE_PROGRESS_MAX
                 lcd.setCursorPos(16)
-                lcd.write(str(progress * 100) + "%")
+                    lcd.write(str(int(progress * 100)) + "%")
 
         else:
             line = proc.stderr.readline()
@@ -179,15 +182,37 @@ def modeReadEEPROM():
 
 def modeReadAll():
     modeReadFlash()
+    dragonWait()
+    modeReadEEPROM()
+
+def modeFlashBootloader():
+    print("Erasing Chip and Burning Fuses")
+    
+    lcd.clear();
+    lcd.write("Burning Fuses")
+    
+    rval = runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -e -Ulock:w:0x3F:m -Uefuse:w:0x05:m -Uhfuse:w:0xDE:m -Ulfuse:w:0xFF:m', DEBUG)
+    
+    if rval == 1:
+        print("Error burning fuses")
+        return rval
 
     dragonWait()
 
-    modeReadEEPROM()
+    lcd.clear();
+    lcd.write("Flash Bootloader")
+    
+    rval = runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -Uflash:w:./optiboot_atmega328.hex:i -Ulock:w:0x0F:m', DEBUG)
+    if rval == 1:
+        print("Error flashing bootloader")
+        return rval
+
+    return 0
 
 MODES = {   'readFlash': modeReadFlash,
             'readEEPROM': modeReadEEPROM,
             'readAll': modeReadAll,
-            'flashBootloader': None,
+            'flashBootloader': modeFlashBootloader,
             'flashFW': None,
             'flashEEPROM': None,
             'updateFW': None}
