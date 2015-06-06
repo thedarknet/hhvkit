@@ -73,6 +73,11 @@ _Questions Questions[NUM_QUESTIONS]={
 
 //END SERIAL EPIC VARS
 
+// BEGIN REPEATED STRINGS
+const char* const PROGMEM iKnowNot = "I know not what you speak of.";
+const char* const PROGMEM sendTheCodes = "https://dcdark.net/  Send the following codes:\n";
+// END REPEATED STRINGS
+
 //BEGIN GLOBAL VARS:
 //We are getting tight on space so I'm packing variables as tightly as I can
 struct _PackedVars {
@@ -686,7 +691,7 @@ void dumpDatabaseToSerial() {
   uint16_t numMsgs = getNumMsgs();
   Serial.print(F("Number of messages: "));
   Serial.println(numMsgs);
-  Serial.println(F("https://dcdark.net/  Send the following codes:"));
+  Serial.print(sendTheCodes);
   Serial.print(F("HHVSERIAL-"));
   Serial.println(GUID);
   
@@ -747,7 +752,7 @@ void dumpDatabaseToUSB() {
     SERIAL_INFO_LN(F("USB is ready."));
     usbDelay(100);
     SERIAL_TRACE_LN("back from delay");
-    printUSB("https://dcdark.net/  Send the following codes:\n");
+    printUSB(sendTheCodes);
     printUSB("HHVUSB-");
     printUSB(GUID);
     printUSB("\n");
@@ -1080,7 +1085,7 @@ void loop() {
               }
             }
           } else {
-            Serial.println(F("I know not what you speak of."));
+            Serial.println(iKnowNot);
             PackedVars.InSerialEpic = 0;
           }
         }
@@ -1102,10 +1107,10 @@ void loop() {
                 GenerateResponseToCorrectSerialEpic();
                 break;
               } else {
-                Serial.println(F("I know not what you speak of."));
+                Serial.println(iKnowNot);
               }
             } else {
-              Serial.println(F("I know not what you speak of."));
+              Serial.println(iKnowNot);
             }
           }
         }
