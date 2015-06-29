@@ -72,13 +72,13 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 #define NUM_QUESTIONS 2
 
 struct _Questions {
-  const char * Text;
-  const char * Answer;
+  const char * PROGMEM Text;
+  const char * PROGMEM Answer;
 };
 
-_Questions Questions[NUM_QUESTIONS]={
+_Questions const Questions[NUM_QUESTIONS] PROGMEM ={
     { "What is the answer to all things?","42" },
-    { "?","smitty" }
+    { "Who started the \nDC Dark Net?","smitty" }
 };
 
 
@@ -87,6 +87,9 @@ _Questions Questions[NUM_QUESTIONS]={
 // BEGIN REPEATED STRINGS
 const char* const PROGMEM iKnowNot = "I know not what you speak of.";
 const char* const PROGMEM sendTheCodes = "https://dcdark.net/  Send the following codes:\n";
+const char* const PROGMEM LINE1 = "abcdefghijklmnopqrst";
+const char* const PROGMEM LINE2 = "uvwxyz"; 
+const char* const PROGMEM EMPTY_STR = "";
 // END REPEATED STRINGS
 
 //BEGIN GLOBAL VARS:
@@ -296,7 +299,17 @@ void sendMorse(uint8_t chr) {
   MorsePause(4);  // Inter character pause
 }
 
-void sendMorseStr(char *msg) {
+void sendMorseStr(const __FlashStringHelper *str) {
+  PGM_P p = reinterpret_cast<PGM_P>(str);
+  while (1) {
+    unsigned char c = pgm_read_byte(p++);
+    if(c==0) break;
+    sendMorse(c);
+    beaconGUID();
+  }
+}
+
+void sendMorseStr(const char *msg) {
   for (; *msg != '\0'; msg++) {
     sendMorse(*msg);
     beaconGUID();
@@ -305,7 +318,7 @@ void sendMorseStr(char *msg) {
 
 // LULZ Twitter. That's old school...  Haven't used Twitter for this since 2012.
 void sendMorseTwitter(uint16_t msgAddr) {
-  sendMorseStr("DKN DASH ");
+  sendMorseStr(F("DKN DASH "));
   for (unsigned char ndx = 0; ndx < 8; ndx++) {
     sendMorse(EEPROM.read(msgAddr+ndx));
   }
@@ -316,7 +329,7 @@ void sendSerialTwitter(uint16_t msgAddr) {
   for (unsigned char ndx = 0; ndx < 16; ndx++) {
     Serial.write(EEPROM.read(msgAddr+ndx));
   }
-  Serial.println(F(""));
+  Serial.println(EMPTY_STR);
 }
   
 // TEA (known to be broken) with all word sizes cut in half (64 bit key, 32 bit blocks)
@@ -353,7 +366,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
   
   uint16_t numMsgs = getNumMsgs();
   if (!isNumMsgsValid(numMsgs)) {
-    Serial.print(F("numMsgs not valid. Setting to 0. This is normal if this is your first pairing."));
+    Serial.print(F("numMsgs not valid. Setting to 0. Ignore if this is your first pairing."));
     Serial.println(numMsgs);
     // Assume this is the first read of this chip and initialize
     numMsgs = 0;
@@ -710,7 +723,7 @@ void dumpDatabaseToSerial() {
   if (isNumMsgsValid(numMsgs)) {
     for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16)
       sendSerialTwitter(msgAddr);
-    Serial.println(F(""));
+    Serial.println(EMPTY_STR);
   }
 }
 
@@ -765,14 +778,14 @@ void dumpDatabaseToUSB() {
     usbDelay(100);
     SERIAL_TRACE_LN("back from delay");
     printUSB(sendTheCodes);
-    printUSB("HHVUSB-");
+    printUSB(F("HHVUSB-"));
     printUSB(GUID);
     printUSB(ENDLINE);
     //Serial.println("back from printing");
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
       for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16) {
-        Serial.println(".");
+        Serial.println(F("."));
         //DAC - adding because if there are enough messages the usb will lock up because update has not been called.
         UsbKeyboard->update();
         sendUSBTwitter(msgAddr);
@@ -795,7 +808,7 @@ void dumpDatabaseToUSB() {
 }
 
 void sendUSBTwitter(int msgAddr) {
-  printUSB("DKN-");
+  printUSB(F("DKN-"));
   uint8_t p;
   for (unsigned char ndx = 0; ndx < 16; ndx++) {
     p = EEPROM.read(msgAddr+ndx);
@@ -806,7 +819,12 @@ void sendUSBTwitter(int msgAddr) {
 
 // copied from Print.cpp
 void printUSB(const __FlashStringHelper *str) {
-  printUSB(reinterpret_cast<const char*>(str));
+  PGM_P p = reinterpret_cast<PGM_P>(str);
+  while (1) {
+    unsigned char c = pgm_read_byte(p++);
+    if(c==0) break;
+    writeUSB(c);
+  }
 }
 
 void printUSB(const char *str) {
@@ -934,28 +952,26 @@ void setup() {
  
   
   #if 1
+    //using sendMorse with flash string takes a really long time?????
+    //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
     PackedVars.LEDMode = MODE_SERIAL_EPIC;
+    //writeNumMsgs(0);
   #endif
   
+  Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+  Display.display();
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
     Serial.println(F("Morse output of codes..."));
-    sendMorse('E');          // .
+    sendMorseStr(F("E"));
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
     Serial.println(F("Snoring..."));
-    sendMorse('I');          // ..
+    sendMorseStr(F("I"));          // ..
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
     Serial.println(F("Operative"));
-    sendMorse('T');
+    sendMorseStr(F("T"));
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
     Serial.println(F("Uber Operative"));
-    sendMorse('D');
-    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-    Display.display();
-    delay(1000);
-    Display.clearDisplay();
-    Display.fillCircle(Display.width()/2, Display.height()/2, 10, WHITE);
-    Display.display();
-    delay(1000);
+    sendMorseStr(F("D"));
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -995,11 +1011,11 @@ void rampLED(uchar ledStart, uchar ledEnd,
   long startTime = millis(); 
   long endTime = startTime + rampTime;
   
-  uint16_t ledDiff = ledEnd-ledStart;
-  uint16_t back1Diff = back1End-back1Start;
-  uint16_t back2Diff = back2End-back2Start;
-  uint16_t back3Diff = back3End-back3Start;
-  uint16_t back4Diff = back4End-back4Start;
+  uint8_t ledDiff = ledEnd-ledStart;
+  uint8_t back1Diff = back1End-back1Start;
+  uint8_t back2Diff = back2End-back2Start;
+  uint8_t back3Diff = back3End-back3Start;
+  uint8_t back4Diff = back4End-back4Start;
   //Serial.println("before while end time");
   //Serial.println(endTime);
   while(millis() < endTime - stepTime) {
@@ -1044,7 +1060,7 @@ void GenerateResponseToCorrectSerialEpic(const char *answer) {
   for(int i=0;i<sizeof(Result);i++) {
     Serial.print(Result[i],HEX); 
   }
-  Serial.println("");
+  Serial.println(EMPTY_STR);
 }
 
 //drain all characters from serial buffer
@@ -1058,11 +1074,14 @@ void loop() {
   dumpDatabaseToSerial();  // Dump DB to serial
   uint32_t start;
  
+ Display.clearDisplay();
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) { // Normal Morse code
     Serial.println(F("Begin Mode: 0"));
-    sendMorseStr("HHVMORSE DASH ");
+    Display.fillCircle(Display.width()/2, Display.height()/2, 20, WHITE);
+    Display.display();
+    sendMorseStr(F("HHVMORSE DASH "));
     sendMorseStr(GUID);
-    sendMorseStr("HTTPS COLON SLASH SLASH DCDARK DOT NET    SEND CODES");
+    sendMorseStr(F("HTTPS COLON SLASH SLASH DCDARK DOT NET    SEND CODES"));
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
       for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16) {
@@ -1071,7 +1090,9 @@ void loop() {
       }
     }
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring mode
-    //Serial.println(F("Begin Mode: 1"));
+    Serial.println(F("Begin Mode: 1"));
+    Display.fillRoundRect(10,10,Display.width()/2, Display.height()/2, 20, WHITE);
+    Display.display();
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
       start = millis();
       rampLED(0, 248, 0, 124, 0, 124, 0, 124, 0, 124, 1600);
@@ -1093,7 +1114,12 @@ void loop() {
       delayAndReadIR(5000-(millis()-start));
     }
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
-    const char * IDontKnowReponse PROGMEM = "I know not what you speak of.";
+    Display.drawPixel(10,10,WHITE);
+    Display.drawPixel(20,20,WHITE);
+    Display.drawPixel(30,30,WHITE);
+    Display.drawPixel(40,40,WHITE);
+    Display.drawPixel(50,50,WHITE);
+    Display.display();
     unsigned long SerialEpicTimer = millis();
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
@@ -1140,7 +1166,7 @@ void loop() {
       }
       drainSerial();
       beaconGUID();
-      delayAndReadIR(2000-(millis()-start));
+      delayAndReadIR(1000-(millis()-start));
     }
     if((millis()-SerialEpicTimer) >= MAX_SERIAL_EPIC_TIME_MS) {
       Serial.println(F("Times up."));
@@ -1149,8 +1175,6 @@ void loop() {
     PackedVars.AwaitingSerialAnswer = 0;
   } else if(PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
     Display.clearDisplay();
-    static const char LINE1[] = "abcdefghijklmnopqrst";
-    static const char LINE2[] = "uvwxyz"; 
     uint16_t button = ((digitalRead(BUTTON_UP)==HIGH?VUP:0) | 
       (digitalRead(BUTTON_DOWN)==HIGH?VDOWN:0) | (digitalRead(BUTTON_LEFT)==HIGH?VLEFT:0) |
       (digitalRead(BUTTON_RIGHT)==HIGH?VRIGHT:0) | (digitalRead(BUTTON_CENTER)==HIGH?VCENTER:0));
@@ -1159,8 +1183,8 @@ void loop() {
     uint8_t location = 0;
     Display.setCursor(0,0);
     Display.println(Questions[DISPLAY_EPIC].Text);
-    Display.println("");
-    Display.println("");
+    Display.println(EMPTY_STR);
+    Display.println(EMPTY_STR);
     Display.println(Answer);
     Display.println(LINE1);
     Display.println(LINE2);
