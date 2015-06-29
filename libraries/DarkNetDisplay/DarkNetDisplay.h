@@ -1,23 +1,13 @@
-#ifndef _ADAFRUIT_GFX_H
-#define _ADAFRUIT_GFX_H
+#ifndef _DARKNET_DISPLAY_H
+#define _DARKNET_DISPLAY_H
 
 #include <Wire.h>
-#if ARDUINO >= 100
- #include "Arduino.h"
- #include "Print.h"
-#else
- #include "WProgram.h"
-#endif
+#include "Arduino.h"
+#include "Print.h"
 
 #define swap(a, b) { int16_t t = a; a = b; b = t; }
 
-#if ARDUINO >= 100
- #include "Arduino.h"
- #define WIRE_WRITE Wire.write
-#else
- #include "WProgram.h"
-  #define WIRE_WRITE Wire.send
-#endif
+#define WIRE_WRITE Wire.write
 
 #define BLACK 0
 #define WHITE 1
@@ -99,10 +89,6 @@ class DarkNetDisplay : public Print {
     fillCircle(uint8_t x0, uint8_t y0, uint8_t r, uint16_t color),
     fillCircleHelper(uint8_t x0, uint8_t y0, uint8_t r, uint8_t cornername,
       uint8_t delta, uint16_t color),
-    drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1,
-      uint8_t x2, uint8_t y2, uint16_t color),
-    fillTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1,
-      uint8_t x2, uint8_t y2, uint16_t color),
     drawRoundRect(uint8_t x0, uint8_t y0, uint8_t w, uint8_t h,
       uint8_t radius, uint16_t color),
     fillRoundRect(uint8_t x0, uint8_t y0, uint8_t w, uint8_t h,
@@ -113,8 +99,7 @@ class DarkNetDisplay : public Print {
     setTextColor(uint8_t c),
     setTextSize(uint8_t s),
     setTextWrap(boolean w),
-    setRotation(uint8_t r),
-    cp437(boolean x=true);
+    setRotation(uint8_t r);
 
   void begin(uint8_t switchvcc = SSD1306_SWITCHCAPVCC, uint8_t i2caddr = SSD1306_I2C_ADDRESS, bool reset=true);
   void ssd1306_command(uint8_t c);
@@ -147,8 +132,7 @@ class DarkNetDisplay : public Print {
 	 textcolor:1,
     textsize:4,
     rotation:4,
-    wrap:1,   // If set, 'wrap' text at right edge of display
-    _cp437:1; // If set, use correct CP437 charset (default is off)
+    wrap:1;   // If set, 'wrap' text at right edge of display
 
  private:
   int8_t _i2caddr, _vccstate, rst;

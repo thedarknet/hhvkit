@@ -1,35 +1,3 @@
-/*
-This is the core graphics library for all our displays, providing a common
-set of graphics primitives (points, lines, circles, etc.).  It needs to be
-paired with a hardware-specific library for each display device we carry
-(to handle the lower-level functions).
-
-Adafruit invests time and resources providing this open source code, please
-support Adafruit & open-source hardware by purchasing products from Adafruit!
- 
-Copyright (c) 2013 Adafruit Industries.  All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-- Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-- Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-*/
 
 #include "DarkNetDisplay.h"
 #include "glcdfont.c"
@@ -42,9 +10,9 @@ POSSIBILITY OF SUCH DAMAGE.
  #define min(a,b) ((a < b) ? a : b)
 #endif
 
-#include "dcdarknet-logo-2color.xbm"
+//#include "dcdarknet-logo-2color.xbm"
 
-#if 0
+#if 1
 static uint8_t buffer[SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8] = { 
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -129,8 +97,7 @@ DarkNetDisplay::DarkNetDisplay(int8_t reset) {
 }
 
 // Draw a circle outline
-void DarkNetDisplay::drawCircle(uint8_t x0, uint8_t y0, uint8_t r,
-    uint16_t color) {
+void DarkNetDisplay::drawCircle(uint8_t x0, uint8_t y0, uint8_t r, uint16_t color) {
   uint8_t f = 1 - r;
   uint8_t ddF_x = 1;
   uint8_t ddF_y = -2 * r;
@@ -163,8 +130,7 @@ void DarkNetDisplay::drawCircle(uint8_t x0, uint8_t y0, uint8_t r,
   }
 }
 
-void DarkNetDisplay::drawCircleHelper( uint8_t x0, uint8_t y0,
-               uint8_t r, uint8_t cornername, uint16_t color) {
+void DarkNetDisplay::drawCircleHelper( uint8_t x0, uint8_t y0, uint8_t r, uint8_t cornername, uint16_t color) {
   uint8_t f     = 1 - r;
   uint8_t ddF_x = 1;
   uint8_t ddF_y = -2 * r;
@@ -206,8 +172,7 @@ void DarkNetDisplay::fillCircle(uint8_t x0, uint8_t y0, uint8_t r,
 }
 
 // Used to do circles and roundrects
-void DarkNetDisplay::fillCircleHelper(uint8_t x0, uint8_t y0, uint8_t r,
-    uint8_t cornername, uint8_t delta, uint16_t color) {
+void DarkNetDisplay::fillCircleHelper(uint8_t x0, uint8_t y0, uint8_t r, uint8_t cornername, uint8_t delta, uint16_t color) {
 
   uint8_t f     = 1 - r;
   uint8_t ddF_x = 1;
@@ -237,9 +202,8 @@ void DarkNetDisplay::fillCircleHelper(uint8_t x0, uint8_t y0, uint8_t r,
 }
 
 // Bresenham's algorithm - thx wikpedia
-void DarkNetDisplay::drawLine(uint8_t x0, uint8_t y0,
-			    uint8_t x1, uint8_t y1, uint16_t color) {
-  int16_t steep = abs(y1 - y0) > abs(x1 - x0);
+void DarkNetDisplay::drawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint16_t color) {
+  uint8_t steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
     swap(x0, y0);
     swap(x1, y1);
@@ -250,12 +214,12 @@ void DarkNetDisplay::drawLine(uint8_t x0, uint8_t y0,
     swap(y0, y1);
   }
 
-  int16_t dx, dy;
+  uint8_t dx, dy;
   dx = x1 - x0;
   dy = abs(y1 - y0);
 
-  int16_t err = dx / 2;
-  int16_t ystep;
+  uint8_t err = dx / 2;
+  uint8_t ystep;
 
   if (y0 < y1) {
     ystep = 1;
@@ -320,91 +284,6 @@ void DarkNetDisplay::fillRoundRect(uint8_t x, uint8_t y, uint8_t w, uint8_t h, u
   fillCircleHelper(x+r    , y+r, r, 2, h-2*r-1, color);
 }
 
-// Draw a triangle
-void DarkNetDisplay::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color) {
-  drawLine(x0, y0, x1, y1, color);
-  drawLine(x1, y1, x2, y2, color);
-  drawLine(x2, y2, x0, y0, color);
-}
-
-// Fill a triangle
-void DarkNetDisplay::fillTriangle ( uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint16_t color) {
-
-  int16_t a, b, y, last;
-
-  // Sort coordinates by Y order (y2 >= y1 >= y0)
-  if (y0 > y1) {
-    swap(y0, y1); swap(x0, x1);
-  }
-  if (y1 > y2) {
-    swap(y2, y1); swap(x2, x1);
-  }
-  if (y0 > y1) {
-    swap(y0, y1); swap(x0, x1);
-  }
-
-  if(y0 == y2) { // Handle awkward all-on-same-line case as its own thing
-    a = b = x0;
-    if(x1 < a)      a = x1;
-    else if(x1 > b) b = x1;
-    if(x2 < a)      a = x2;
-    else if(x2 > b) b = x2;
-    drawFastHLine(a, y0, b-a+1, color);
-    return;
-  }
-
-  int16_t
-    dx01 = x1 - x0,
-    dy01 = y1 - y0,
-    dx02 = x2 - x0,
-    dy02 = y2 - y0,
-    dx12 = x2 - x1,
-    dy12 = y2 - y1;
-  int32_t
-    sa   = 0,
-    sb   = 0;
-
-  // For upper part of triangle, find scanline crossings for segments
-  // 0-1 and 0-2.  If y1=y2 (flat-bottomed triangle), the scanline y1
-  // is included here (and second loop will be skipped, avoiding a /0
-  // error there), otherwise scanline y1 is skipped here and handled
-  // in the second loop...which also avoids a /0 error here if y0=y1
-  // (flat-topped triangle).
-  if(y1 == y2) last = y1;   // Include y1 scanline
-  else         last = y1-1; // Skip it
-
-  for(y=y0; y<=last; y++) {
-    a   = x0 + sa / dy01;
-    b   = x0 + sb / dy02;
-    sa += dx01;
-    sb += dx02;
-    /* longhand:
-    a = x0 + (x1 - x0) * (y - y0) / (y1 - y0);
-    b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
-    */
-    if(a > b) swap(a,b);
-    drawFastHLine(a, y, b-a+1, color);
-  }
-
-  // For lower part of triangle, find scanline crossings for segments
-  // 0-2 and 1-2.  This loop is skipped if y1=y2.
-  sa = dx12 * (y - y1);
-  sb = dx02 * (y - y0);
-  for(; y<=y2; y++) {
-    a   = x1 + sa / dy12;
-    b   = x0 + sb / dy02;
-    sa += dx12;
-    sb += dx02;
-    /* longhand:
-    a = x1 + (x2 - x1) * (y - y1) / (y2 - y1);
-    b = x0 + (x2 - x0) * (y - y0) / (y2 - y0);
-    */
-    if(a > b) swap(a,b);
-    drawFastHLine(a, y, b-a+1, color);
-  }
-}
-
-
 size_t DarkNetDisplay::write(uint8_t c) {
   if (c == '\n') {
     cursor_y += textsize*8;
@@ -433,7 +312,7 @@ void DarkNetDisplay::drawChar(uint8_t x, uint8_t y, unsigned char c, uint16_t co
      ((y + 8 * size - 1) < 0))   // Clip top
     return;
 
-  if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
+  if(c >= 176) c++; // Handle 'classic' charset behavior
 
   for (int8_t i=0; i<6; i++ ) {
     uint8_t line;
@@ -505,17 +384,6 @@ void DarkNetDisplay::setRotation(uint8_t x) {
   }
 }
 
-// Enable (or disable) Code Page 437-compatible charset.
-// There was an error in glcdfont.c for the longest time -- one character
-// (#176, the 'light shade' block) was missing -- this threw off the index
-// of every character that followed it.  But a TON of code has been written
-// with the erroneous character indices.  By default, the library uses the
-// original 'wrong' behavior and old sketches will still work.  Pass 'true'
-// to this function to use correct CP437 character values in your code.
-void DarkNetDisplay::cp437(boolean x) {
-  _cp437 = x;
-}
-
 // Return the size of the display (per current rotation)
 uint8_t DarkNetDisplay::width(void) const {
   return _width;
@@ -561,10 +429,8 @@ void DarkNetDisplay::begin(uint8_t vccstate, uint8_t i2caddr, bool reset) {
   _vccstate = vccstate;
   _i2caddr = i2caddr;
 
-  {
-    // I2C Init
-    Wire.begin();
-  }
+  // I2C Init
+  Wire.begin();
 
   if (reset) {
     // Setup reset pin direction (used by both SPI and I2C)  
@@ -731,14 +597,12 @@ void DarkNetDisplay::dim(boolean dim) {
 }
 
 void DarkNetDisplay::ssd1306_data(uint8_t c) {
-  {
     // I2C
     uint8_t control = 0x40;   // Co = 0, D/C = 1
     Wire.beginTransmission(_i2caddr);
     WIRE_WRITE(control);
     WIRE_WRITE(c);
     Wire.endTransmission();
-  }
 }
 
 void DarkNetDisplay::display(void) {
@@ -752,9 +616,6 @@ void DarkNetDisplay::display(void) {
     ssd1306_command(7); // Page end address
   #endif
 
-  {
-    // save I2C bitrate
-
     // I2C
     for (uint16_t i=0; i<(SSD1306_LCDWIDTH*SSD1306_LCDHEIGHT/8); i++) {
       // send a bunch of data in one xmission
@@ -767,7 +628,6 @@ void DarkNetDisplay::display(void) {
       i--;
       Wire.endTransmission();
     }
-  }
 }
 
 // clear everything

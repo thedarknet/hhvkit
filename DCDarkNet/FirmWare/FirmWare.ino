@@ -1,6 +1,6 @@
 #include <avr/pgmspace.h>
 #include "IRSerial-2014.h"
-#include "MD5.h"
+//#include "MD5.h"
 #include <EEPROM.h>
 #include <avr/sleep.h>
 #include <Wire.h>
@@ -67,8 +67,9 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 //bool to see if we have started the SerialEpic
 #define MAX_SERIAL_EPIC_TIME_MS 30000
 #define STANDARD_SERIAL_EPIC 0
+#define DISPLAY_EPIC 1
 #define MAX_SERIAL_ANSWER_LENGTH 10
-#define NUM_QUESTIONS 1
+#define NUM_QUESTIONS 2
 
 struct _Questions {
   const char * Text;
@@ -76,7 +77,8 @@ struct _Questions {
 };
 
 _Questions Questions[NUM_QUESTIONS]={
-    { "What is the answer to all things?","42" }
+    { "What is the answer to all things?","42" },
+    { "?","smitty" }
 };
 
 
@@ -132,7 +134,7 @@ DarkNetDisplay Display(OLED_RESET);
 // END EEPROM COUNT LOCATION
 
 const char *const ENDLINE PROGMEM = "\n";
-//const char *const WEBS_SITE_INFO PROGMEM = "https://dcdark.net/  Send the following codes:"
+
 // Morse Code constants
 unsigned char const morse[28] PROGMEM = {
    0x05,   // A  .-     00000101
@@ -175,7 +177,7 @@ unsigned char const morse[28] PROGMEM = {
   #define SERIAL_TRACE(a)
 #endif
 
-#define SERIAL_INFO 
+//#define SERIAL_INFO 
 #ifdef SERIAL_INFO
   #define SERIAL_INFO_LN(a) Serial.println(a);
   #define SERIAL_INFO(a) Serial.print(a);
@@ -463,7 +465,7 @@ unsigned char readWordFromBuf(uint8_t *packedBuf, unsigned char *strDst = 0) {
     } else if (cur >= '0' && cur <= '9') {
       cur = cur - '0' + 6;
     } else {
-      Serial.print("readWordFromBuf() line noise: ");
+      Serial.print(F("readWordFromBuf() line noise: "));
       Serial.println(cur);
       return 0;  // Line noise.  Return and wait for the next one.
     }      
@@ -932,7 +934,7 @@ void setup() {
  
   
   #if 1
-    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
+    PackedVars.LEDMode = MODE_SERIAL_EPIC;
   #endif
   
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
@@ -951,10 +953,9 @@ void setup() {
     Display.display();
     delay(1000);
     Display.clearDisplay();
-    Display.setTextColorWhite(true);
-    Display.println(F("Demetrius"));
-    //Display.fillCircle(Display.width()/2, Display.height()/2, 10, WHITE);
+    Display.fillCircle(Display.width()/2, Display.height()/2, 10, WHITE);
     Display.display();
+    delay(1000);
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -994,11 +995,11 @@ void rampLED(uchar ledStart, uchar ledEnd,
   long startTime = millis(); 
   long endTime = startTime + rampTime;
   
-  int ledDiff = ledEnd-ledStart;
-  int back1Diff = back1End-back1Start;
-  int back2Diff = back2End-back2Start;
-  int back3Diff = back3End-back3Start;
-  int back4Diff = back4End-back4Start;
+  uint16_t ledDiff = ledEnd-ledStart;
+  uint16_t back1Diff = back1End-back1Start;
+  uint16_t back2Diff = back2End-back2Start;
+  uint16_t back3Diff = back3End-back3Start;
+  uint16_t back4Diff = back4End-back4Start;
   //Serial.println("before while end time");
   //Serial.println(endTime);
   while(millis() < endTime - stepTime) {
@@ -1019,7 +1020,8 @@ void rampLED(uchar ledStart, uchar ledEnd,
   delayAndReadIR(endTime-millis());
 }
 
-void GenerateResponseToCorrectSerialEpic() {
+void GenerateResponseToCorrectSerialEpic(const char *answer) {
+  #if 0
   //hash or encrypt answer with key?
   MD5_CTX ctx;
   MD5 hasher;
@@ -1028,7 +1030,17 @@ void GenerateResponseToCorrectSerialEpic() {
   hasher.MD5Update(&ctx,&KEY[0],sizeof(KEY));
   hasher.MD5Update(&ctx,&GUID[0],sizeof(GUID));
   hasher.MD5Final(&Result[0],&ctx);
-  Serial.println(F("The daemon will accept the following: " ));
+  #else
+    unsigned char Result[18] = {0};
+    memcpy(&Result[0],&KEY[0],8);
+    memcpy(&Result[8],&GUID[0],8);
+    memcpy(&Result[16],answer,2);
+    for(int i=0;i<(sizeof(Result)-4);i+=2) {
+     encrypt((uint16_t*)&Result[i]);  
+    }
+  #endif
+  //Serial.println(F("The daemon will accept the following: " ));
+  Serial.println(F("Send this to daemon: " ));
   for(int i=0;i<sizeof(Result);i++) {
     Serial.print(Result[i],HEX); 
   }
@@ -1059,7 +1071,7 @@ void loop() {
       }
     }
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring mode
-    Serial.println(F("Begin Mode: 1"));
+    //Serial.println(F("Begin Mode: 1"));
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
       start = millis();
       rampLED(0, 248, 0, 124, 0, 124, 0, 124, 0, 124, 1600);
@@ -1115,7 +1127,7 @@ void loop() {
               }
               //Serial.println((char *)&serialAnswer[0]);
               if(strcmp(Questions[STANDARD_SERIAL_EPIC].Answer,&serialAnswer[0])==0) {
-                GenerateResponseToCorrectSerialEpic();
+                GenerateResponseToCorrectSerialEpic(Questions[STANDARD_SERIAL_EPIC].Answer);
                 break;
               } else {
                 Serial.println(iKnowNot);
@@ -1136,17 +1148,22 @@ void loop() {
     PackedVars.InSerialEpic = 0;
     PackedVars.AwaitingSerialAnswer = 0;
   } else if(PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
+    Display.clearDisplay();
+    static const char LINE1[] = "abcdefghijklmnopqrst";
+    static const char LINE2[] = "uvwxyz"; 
     uint16_t button = ((digitalRead(BUTTON_UP)==HIGH?VUP:0) | 
       (digitalRead(BUTTON_DOWN)==HIGH?VDOWN:0) | (digitalRead(BUTTON_LEFT)==HIGH?VLEFT:0) |
       (digitalRead(BUTTON_RIGHT)==HIGH?VRIGHT:0) | (digitalRead(BUTTON_CENTER)==HIGH?VCENTER:0));
     
     char Answer[8] = {'l','\0','\0','\0','\0','\0','\0','\0'};
+    uint8_t location = 0;
     Display.setCursor(0,0);
-    Display.println("Question");
+    Display.println(Questions[DISPLAY_EPIC].Text);
+    Display.println("");
     Display.println("");
     Display.println(Answer);
-    Display.println("abcdefghijklmnop");
-    Display.println("qrstuvwxyz");
+    Display.println(LINE1);
+    Display.println(LINE2);
     Display.display();
     delay(20);
     //updateQuestion(Display);
