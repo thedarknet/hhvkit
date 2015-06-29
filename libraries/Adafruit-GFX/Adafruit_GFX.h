@@ -59,7 +59,8 @@ class Adafruit_GFX : public Print {
     setTextColor(uint16_t c, uint16_t bg),
     setTextSize(uint8_t s),
     setTextWrap(boolean w),
-    setRotation(uint8_t r);
+    setRotation(uint8_t r),
+    cp437(boolean x=true);
 
 #if ARDUINO >= 100
   virtual size_t write(uint8_t);
@@ -71,6 +72,10 @@ class Adafruit_GFX : public Print {
   int16_t width(void) const;
 
   uint8_t getRotation(void) const;
+
+  // get current cursor position (get rotation safe maximum values, using: width() for x, height() for y)
+  int16_t getCursorX(void) const;
+  int16_t getCursorY(void) const;
 
  protected:
   const int16_t
@@ -84,7 +89,35 @@ class Adafruit_GFX : public Print {
     textsize,
     rotation;
   boolean
-    wrap; // If set, 'wrap' text at right edge of display
+    wrap,   // If set, 'wrap' text at right edge of display
+    _cp437; // If set, use correct CP437 charset (default is off)
+};
+
+class Adafruit_GFX_Button {
+
+ public:
+  Adafruit_GFX_Button(void);
+  void initButton(Adafruit_GFX *gfx, int16_t x, int16_t y, 
+		      uint8_t w, uint8_t h, 
+		      uint16_t outline, uint16_t fill, uint16_t textcolor,
+		      char *label, uint8_t textsize);
+  void drawButton(boolean inverted = false);
+  boolean contains(int16_t x, int16_t y);
+
+  void press(boolean p);
+  boolean isPressed();
+  boolean justPressed();
+  boolean justReleased();
+
+ private:
+  Adafruit_GFX *_gfx;
+  int16_t _x, _y;
+  uint16_t _w, _h;
+  uint8_t _textsize;
+  uint16_t _outlinecolor, _fillcolor, _textcolor;
+  char _label[10];
+
+  boolean currstate, laststate;
 };
 
 #endif // _ADAFRUIT_GFX_H

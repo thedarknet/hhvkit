@@ -1,11 +1,16 @@
 
-#include <SPI.h>
+
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+//#include <SPI.h>
+//#include <Serial.h>
+//#include <Adafruit_GFX.h>
+//#include <Adafruit_SSD1306.h>
+#include <DarkNetDisplay.h>
+
+//#define Adafruit_SSD1306 DarkNetDisplay
 
 #define OLED_RESET 4
-Adafruit_SSD1306 display(OLED_RESET);
+DarkNetDisplay display(OLED_RESET);
 
 #define NUMFLAKES 10
 #define XPOS 0
@@ -58,10 +63,12 @@ void setup()   {
 
   // draw a single pixel
   display.drawPixel(10, 10, WHITE);
+  Serial.println("draw 1 pixel");
   // Show the display buffer on the hardware.
   // NOTE: You _must_ call display after making any drawing commands
   // to make them visible on the display hardware!
   display.display();
+  
   delay(2000);
   display.clearDisplay();
 
@@ -73,6 +80,7 @@ void setup()   {
 
   // draw rectangles
   testdrawrect();
+  Serial.println("drawrect");
   display.display();
   delay(2000);
   display.clearDisplay();
@@ -85,12 +93,15 @@ void setup()   {
 
   // draw mulitple circles
   testdrawcircle();
+  Serial.println("drawcircle");
   display.display();
+  
   delay(2000);
   display.clearDisplay();
 
   // draw a white circle, 10 pixel radius
   display.fillCircle(display.width()/2, display.height()/2, 10, WHITE);
+  Serial.println("fill circle");
   display.display();
   delay(2000);
   display.clearDisplay();
@@ -105,6 +116,7 @@ void setup()   {
 
   testdrawtriangle();
   delay(2000);
+  Serial.println("6");
   display.clearDisplay();
    
   //testfilltriangle();
@@ -124,14 +136,14 @@ void setup()   {
 
   // text display tests
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+  //display.setTextColor(WHITE);
   display.setCursor(0,0);
-  display.println("Hello, world!");
-  display.setTextColor(BLACK, WHITE); // 'inverted' text
+  display.println(F("Hello, world!"));
+  //display.setTextColor(BLACK, WHITE); // 'inverted' text
   display.println(3.141592);
   display.setTextSize(2);
-  display.setTextColor(WHITE);
-  display.print("0x"); display.println(0xDEADBEEF, HEX);
+  //display.setTextColorWhite(true);
+  display.print(F("0x")); display.println(0xDEADBEEF, HEX);
   display.display();
   delay(2000);
 
@@ -199,7 +211,7 @@ void testdrawbitmap(const uint8_t *bitmap, uint8_t w, uint8_t h) {
 */
 void testdrawchar(void) {
   display.setTextSize(1);
-  display.setTextColor(WHITE);
+  //display.setTextColor(WHITE);
   display.setCursor(0,0);
 
   for (uint8_t i=0; i < 168; i++) {
@@ -320,10 +332,10 @@ void testdrawline() {
 
 void testscrolltext(void) {
   display.setTextSize(2);
-  display.setTextColor(WHITE);
+  //display.setTextColor(WHITE);
   display.setCursor(10,0);
   display.clearDisplay();
-  display.println("Demetrius");
+  display.println(F("Demetrius"));
   display.display();
  
   display.startscrollright(0x00, 0x0F);

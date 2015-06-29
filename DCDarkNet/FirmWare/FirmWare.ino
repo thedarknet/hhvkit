@@ -3,10 +3,8 @@
 #include "MD5.h"
 #include <EEPROM.h>
 #include <avr/sleep.h>
-//#include <Wire.h>
-//#include <SPI.h>
-//#include <Adafruit_GFX.h>
-//#include <Adafruit_SSD1306.h>
+#include <Wire.h>
+#include <DarkNetDisplay.h>
 
 // USB Keyboard port
 //#define USB_PUBLIC static
@@ -43,6 +41,17 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 
 // Switch pin
 #define BUTTON_PIN 12
+
+#define BUTTON_UP        16
+#define BUTTON_LEFT      26
+#define BUTTON_RIGHT     23
+#define BUTTON_DOWN      25
+#define BUTTON_CENTER    24
+#define VUP (1<<0)
+#define VDOWN (1<<1)
+#define VLEFT (1<<2)
+#define VRIGHT (1<<3)
+#define VCENTER (1<<4)
 
 // Backlight LEDs
 #define BACKLIGHT_4 5
@@ -86,7 +95,7 @@ uint16_t KEY[4];
 char GUID[9];
 unsigned long nextBeacon;
 #define OLED_RESET 4
-//Adafruit_SSD1306 Display(OLED_RESET);
+DarkNetDisplay Display(OLED_RESET);
 //END GLOBAL VARS
 
 
@@ -117,6 +126,8 @@ unsigned long nextBeacon;
 
 // END EEPROM COUNT LOCATION
 
+const char *const ENDLINE PROGMEM = "\n";
+//const char *const WEBS_SITE_INFO PROGMEM = "https://dcdark.net/  Send the following codes:"
 // Morse Code constants
 unsigned char const morse[28] PROGMEM = {
    0x05,   // A  .-     00000101
@@ -150,10 +161,10 @@ unsigned char const morse[28] PROGMEM = {
 };
 
 //debugging macros
-#define SERIAL_TRACE 
+//#define SERIAL_TRACE 
 #ifdef SERIAL_TRACE
   #define SERIAL_TRACE_LN(a) Serial.println(a);
-  #define SERIAL_TRACE(a) Serial.println(a);
+  #define SERIAL_TRACE(a) Serial.print(a);
 #else
   #define SERIAL_TRACE_LN(a)
   #define SERIAL_TRACE(a)
@@ -298,7 +309,7 @@ void sendSerialTwitter(uint16_t msgAddr) {
   for (unsigned char ndx = 0; ndx < 16; ndx++) {
     Serial.write(EEPROM.read(msgAddr+ndx));
   }
-  Serial.println("");
+  Serial.println(F(""));
 }
   
 // TEA (known to be broken) with all word sizes cut in half (64 bit key, 32 bit blocks)
@@ -384,7 +395,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
 // Our buffer only needs to be big enough to hold a staza
 // to process.  Right now (2014) that's 12 bytes.  I'm over-sizing
 // 'cuz why not?
-#define RX_BUF_SIZE 32
+#define RX_BUF_SIZE 24
 unsigned char rxBuf[RX_BUF_SIZE];
 unsigned char head;
 
@@ -473,8 +484,8 @@ unsigned char isValidWord() {
   // We have a good framing. Future failures will be reported.
   char c = rxBufNdx(-11);
   if (c!='x' && c!='y' && c!='a' && c!='b') {
-    Serial.print("Bad rx header: ");
-    Serial.println(c);
+    SERIAL_TRACE(F("Bad rx header: "));
+    SERIAL_TRACE_LN(c);
     return false;
   }
   for (int i = -10; i < -2; i++) {
@@ -482,10 +493,10 @@ unsigned char isValidWord() {
     
     // If it's not a letter and not a number
     if (!(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9')) {  
-      Serial.print("Bad rx data: ");
-      Serial.print(i);
-      Serial.print(" ");
-      Serial.println(c);
+      SERIAL_TRACE("Bad rx data: ");
+      SERIAL_TRACE(i);
+      SERIAL_TRACE(" ");
+      SERIAL_TRACE_LN(c);
       return false;
     }
   }
@@ -525,13 +536,13 @@ int weAreAlice() {
 
   // Right on the heels is 0a, Bob's GUID
   if (!readWordFromIR() || rxBufNdx(-11) != 'a') {
-    Serial.println(F("Error reading 0a"));
+    SERIAL_TRACE_LN(F("Error reading 0a"));
     return -1;
   }
   digitalWrite(BACKLIGHT_3, HIGH);
 
   if (!readWordFromBuf(bob, bobGUID)) {
-    Serial.println(F("Error reading 0a from rxBuf"));
+    SERIAL_TRACE_LN(F("Error reading 0a from rxBuf"));
     return -1;
   }
   
@@ -556,7 +567,7 @@ int weAreBob() {
   uint8_t alice[4] = {0, 0, 0, 0};
   unsigned char aliceGUID[8];
   if (!readWordFromBuf(alice, aliceGUID)) {
-    Serial.println(F("Error reading 0x from rxBuf."));
+    SERIAL_TRACE_LN(F("Error reading 0x from rxBuf."));
     return -1;
   }
   digitalWrite(BACKLIGHT_3, HIGH);
@@ -575,14 +586,14 @@ int weAreBob() {
 
   // Look for a response from Alice
   if (!readWordFromIR() || rxBufNdx(-11) != 'b') {
-    Serial.println(F("Error reading 0b"));
+    SERIAL_TRACE_LN(F("Error reading 0b"));
     return -1;
   }
   digitalWrite(BACKLIGHT_2, HIGH);
     
   uint8_t bobEnc[4] = {0, 0, 0, 0};
   if (!readWordFromBuf(bobEnc)) {
-    Serial.println(F("Error reading 0b from rxBuf."));
+    SERIAL_TRACE_LN(F("Error reading 0b from rxBuf."));
     return -1;
   }
   digitalWrite(BACKLIGHT_1, HIGH);
@@ -683,7 +694,7 @@ void processIR(unsigned char c) {
 
 void dumpDatabaseToSerial() {
   uint16_t numMsgs = getNumMsgs();
-  Serial.print(F("Number of messages: "));
+  Serial.print(F("# of messages: "));
   Serial.println(numMsgs);
   Serial.println(F("https://dcdark.net/  Send the following codes:"));
   Serial.print(F("HHVSERIAL-"));
@@ -692,7 +703,7 @@ void dumpDatabaseToSerial() {
   if (isNumMsgsValid(numMsgs)) {
     for (int msgAddr = 0; msgAddr < numMsgs*16; msgAddr+=16)
       sendSerialTwitter(msgAddr);
-    Serial.println("");
+    Serial.println(F(""));
   }
 }
 
@@ -746,10 +757,10 @@ void dumpDatabaseToUSB() {
     SERIAL_INFO_LN(F("USB is ready."));
     usbDelay(100);
     SERIAL_TRACE_LN("back from delay");
-    printUSB("https://dcdark.net/  Send the following codes:\n");
-    printUSB("HHVUSB-");
+    printUSB(F("https://dcdark.net/  Send the following codes:\n"));
+    printUSB(F("HHVUSB-"));
     printUSB(GUID);
-    printUSB("\n");
+    printUSB(ENDLINE);
     //Serial.println("back from printing");
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
@@ -759,7 +770,7 @@ void dumpDatabaseToUSB() {
         UsbKeyboard->update();
         sendUSBTwitter(msgAddr);
       }
-      printUSB("\n");
+      printUSB(ENDLINE);
     } 
     // Give the USB a second to finalize the last characters.
     usbDelay(1000);
@@ -783,7 +794,7 @@ void sendUSBTwitter(int msgAddr) {
     p = EEPROM.read(msgAddr+ndx);
     writeUSB(p);
   }
-  printUSB("\n");
+  printUSB(ENDLINE);
 }
 
 // copied from Print.cpp
@@ -832,11 +843,11 @@ void writeUSB(char c) {
     UsbKeyboard->sendKeyStroke(KEY_ENTER);
   } // TODO If you use any other characters in dumpDatabase, define them here.
   else { // ERROR
-    Serial.print("ERROR: Unknown character: ");
-    Serial.print(int(c));
-    Serial.print(" ");
-    Serial.write(c);
-    Serial.println("");
+    SERIAL_TRACE("ERROR: Unknown character: ");
+    SERIAL_TRACE(int(c));
+    SERIAL_TRACE(" ");
+    SERIAL_TRACE(c);
+    SERIAL_TRACE_LN("");
   }
 }
 
@@ -875,6 +886,18 @@ void setup() {
   // Setup the USB TX button.
   pinMode(BUTTON_PIN, INPUT);
   digitalWrite(BUTTON_PIN, HIGH);  // Internal pull-up
+  
+  //setup display board buttons
+  pinMode(BUTTON_UP, INPUT);
+  digitalWrite(BUTTON_UP, HIGH);  // Internal pull-up
+  pinMode(BUTTON_DOWN, INPUT);
+  digitalWrite(BUTTON_DOWN, HIGH);  // Internal pull-up
+  pinMode(BUTTON_LEFT, INPUT);
+  digitalWrite(BUTTON_LEFT, HIGH);  // Internal pull-up
+  pinMode(BUTTON_RIGHT, INPUT);
+  digitalWrite(BUTTON_RIGHT, HIGH);  // Internal pull-up
+  pinMode(BUTTON_CENTER, INPUT);
+  digitalWrite(BUTTON_CENTER, HIGH);  // Internal pull-up
   
   delay(200);  // Reset "debounce"
 
@@ -919,11 +942,14 @@ void setup() {
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
     Serial.println(F("Uber Operative"));
     sendMorse('D');
-    //Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-    //Display.display();
-    //delay(1000);
+    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    Display.display();
+    delay(1000);
+    Display.clearDisplay();
+    Display.setTextColorWhite(true);
+    Display.println(F("Demetrius"));
     //Display.fillCircle(Display.width()/2, Display.height()/2, 10, WHITE);
-    //Display.display();
+    Display.display();
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -1050,6 +1076,7 @@ void loop() {
       delayAndReadIR(5000-(millis()-start));
     }
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
+    const char * IDontKnowReponse PROGMEM = "I know not what you speak of.";
     unsigned long SerialEpicTimer = millis();
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
@@ -1104,7 +1131,21 @@ void loop() {
     PackedVars.InSerialEpic = 0;
     PackedVars.AwaitingSerialAnswer = 0;
   } else if(PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
+    uint16_t button = ((digitalRead(BUTTON_UP)==HIGH?VUP:0) | 
+      (digitalRead(BUTTON_DOWN)==HIGH?VDOWN:0) | (digitalRead(BUTTON_LEFT)==HIGH?VLEFT:0) |
+      (digitalRead(BUTTON_RIGHT)==HIGH?VRIGHT:0) | (digitalRead(BUTTON_CENTER)==HIGH?VCENTER:0));
     
+    char Answer[8] = {'l','\0','\0','\0','\0','\0','\0','\0'};
+    Display.setCursor(0,0);
+    Display.println("Question");
+    Display.println("");
+    Display.println(Answer);
+    Display.println("abcdefghijklmnop");
+    Display.println("qrstuvwxyz");
+    Display.display();
+    delay(20);
+    //updateQuestion(Display);
+    //updateDisplay(button,Display);
     
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');

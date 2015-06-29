@@ -35,8 +35,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "glcdfont.c"
 #ifdef __AVR__
  #include <avr/pgmspace.h>
+#elif defined(ESP8266)
+ #include <pgmspace.h>
 #else
  #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+#endif
+
+#ifndef min
+ #define min(a,b) ((a < b) ? a : b)
 #endif
 
 Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h):
@@ -49,6 +55,7 @@ Adafruit_GFX::Adafruit_GFX(int16_t w, int16_t h):
   textsize  = 1;
   textcolor = textbgcolor = 0xFFFF;
   wrap      = true;
+  _cp437    = false;
 }
 
 // Draw a circle outline
@@ -436,6 +443,8 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
      ((y + 8 * size - 1) < 0))   // Clip top
     return;
 
+  if(!_cp437 && (c >= 176)) c++; // Handle 'classic' charset behavior
+
   for (int8_t i=0; i<6; i++ ) {
     uint8_t line;
     if (i == 5) 
@@ -464,6 +473,14 @@ void Adafruit_GFX::drawChar(int16_t x, int16_t y, unsigned char c,
 void Adafruit_GFX::setCursor(int16_t x, int16_t y) {
   cursor_x = x;
   cursor_y = y;
+}
+
+int16_t Adafruit_GFX::getCursorX(void) const {
+  return cursor_x;
+}
+
+int16_t Adafruit_GFX::getCursorY(void) const {
+  return cursor_y;
 }
 
 void Adafruit_GFX::setTextSize(uint8_t s) {
@@ -505,6 +522,17 @@ void Adafruit_GFX::setRotation(uint8_t x) {
   }
 }
 
+// Enable (or disable) Code Page 437-compatible charset.
+// There was an error in glcdfont.c for the longest time -- one character
+// (#176, the 'light shade' block) was missing -- this threw off the index
+// of every character that followed it.  But a TON of code has been written
+// with the erroneous character indices.  By default, the library uses the
+// original 'wrong' behavior and old sketches will still work.  Pass 'true'
+// to this function to use correct CP437 character values in your code.
+void Adafruit_GFX::cp437(boolean x) {
+  _cp437 = x;
+}
+
 // Return the size of the display (per current rotation)
 int16_t Adafruit_GFX::width(void) const {
   return _width;
@@ -518,3 +546,70 @@ void Adafruit_GFX::invertDisplay(boolean i) {
   // Do nothing, must be subclassed if supported
 }
 
+/***************************************************************************/
+// code for the GFX button UI element
+
+Adafruit_GFX_Button::Adafruit_GFX_Button(void) {
+   _gfx = 0;
+}
+
+void Adafruit_GFX_Button::initButton(Adafruit_GFX *gfx,
+					  int16_t x, int16_t y, 
+					  uint8_t w, uint8_t h, 
+					  uint16_t outline, uint16_t fill, 
+					  uint16_t textcolor,
+					  char *label, uint8_t textsize)
+{
+  _x = x;
+  _y = y;
+  _w = w;
+  _h = h;
+  _outlinecolor = outline;
+  _fillcolor = fill;
+  _textcolor = textcolor;
+  _textsize = textsize;
+  _gfx = gfx;
+  strncpy(_label, label, 9);
+  _label[9] = 0;
+}
+
+ 
+
+ void Adafruit_GFX_Button::drawButton(boolean inverted) {
+   uint16_t fill, outline, text;
+
+   if (! inverted) {
+     fill = _fillcolor;
+     outline = _outlinecolor;
+     text = _textcolor;
+   } else {
+     fill =  _textcolor;
+     outline = _outlinecolor;
+     text = _fillcolor;
+   }
+
+   _gfx->fillRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, min(_w,_h)/4, fill);
+   _gfx->drawRoundRect(_x - (_w/2), _y - (_h/2), _w, _h, min(_w,_h)/4, outline);
+   
+   
+   _gfx->setCursor(_x - strlen(_label)*3*_textsize, _y-4*_textsize);
+   _gfx->setTextColor(text);
+   _gfx->setTextSize(_textsize);
+   _gfx->print(_label);
+ }
+
+boolean Adafruit_GFX_Button::contains(int16_t x, int16_t y) {
+   if ((x < (_x - _w/2)) || (x > (_x + _w/2))) return false;
+   if ((y < (_y - _h)) || (y > (_y + _h/2))) return false;
+   return true;
+ }
+
+
+ void Adafruit_GFX_Button::press(boolean p) {
+   laststate = currstate;
+   currstate = p;
+ }
+ 
+ boolean Adafruit_GFX_Button::isPressed() { return currstate; }
+ boolean Adafruit_GFX_Button::justPressed() { return (currstate && !laststate); }
+ boolean Adafruit_GFX_Button::justReleased() { return (!currstate && laststate); }
