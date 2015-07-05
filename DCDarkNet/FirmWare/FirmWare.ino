@@ -962,8 +962,7 @@ void setup() {
   EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
  
   
-  #if 1
-    //using sendMorse with flash string takes a really long time?????
+  #if 0
     //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
     PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
     //Serial.println(sizeof(UsbKeyboard));
