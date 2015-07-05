@@ -1,3 +1,4 @@
+
 #include <avr/pgmspace.h>
 #include "IRSerial-2014.h"
 //#include "MD5.h"
@@ -42,11 +43,11 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 // Switch pin
 #define BUTTON_PIN 12
 
-#define BUTTON_UP        16
-#define BUTTON_LEFT      26
-#define BUTTON_RIGHT     23
-#define BUTTON_DOWN      25
-#define BUTTON_CENTER    24
+#define BUTTON_UP        10 //which is the 16th counted pin
+#define BUTTON_LEFT      A3
+#define BUTTON_RIGHT     A0
+#define BUTTON_DOWN      A2
+#define BUTTON_CENTER    A1
 #define VUP (1<<0)
 #define VDOWN (1<<1)
 #define VLEFT (1<<2)
@@ -60,45 +61,50 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 #define BACKLIGHT_1 11
 
 //BEGIN SERIAL EPIC VARS
-//string that starts serial epic
-#define START_SERIAL_EPIC_STRING "CMDC0DE"
-//length of serial string
-#define MIN_SERIAL_LEN  7
 //bool to see if we have started the SerialEpic
 #define MAX_SERIAL_EPIC_TIME_MS 30000
 #define STANDARD_SERIAL_EPIC 0
-#define DISPLAY_EPIC 1
 #define MAX_SERIAL_ANSWER_LENGTH 10
-#define NUM_QUESTIONS 2
+#define NUM_QUESTIONS 1
 
 struct _Questions {
-  const char * PROGMEM Text;
-  const char * PROGMEM Answer;
+  const char * Text;
+  const char * Answer;
 };
 
-_Questions const Questions[NUM_QUESTIONS] PROGMEM ={
-    { "What is the answer to all things?","42" },
-    { "Who started the \nDC Dark Net?","smitty" }
+static _Questions const Questions[NUM_QUESTIONS] PROGMEM ={
+    { "What is the answer to all things?","42" }
 };
 
 
 //END SERIAL EPIC VARS
 
-// BEGIN REPEATED STRINGS
-const char* const PROGMEM iKnowNot = "I know not what you speak of.";
-const char* const PROGMEM sendTheCodes = "https://dcdark.net/  Send the following codes:\n";
-const char* const PROGMEM LINE1 = "abcdefghijklmnopqrst";
-const char* const PROGMEM LINE2 = "uvwxyz"; 
-const char* const PROGMEM EMPTY_STR = "";
+// BEGIN STRINGS
+//string that starts serial epic
+static const char* const PROGMEM START_SERIAL_EPIC_STRING = "CMDCODE";
+//length of serial string
+#define MIN_SERIAL_LEN  7
+static const char* const PROGMEM SEND_TO_DAEMON = "Send this to daemon: ";
+static const char* const PROGMEM DisplayEpicText = "Who started the \nDC Dark Net?";
+static const char* const PROGMEM DisplayEpicAnswer = "SMITTY";
+static const char* const PROGMEM iKnowNot = "I know not what you speak of.";
+static const char* const PROGMEM sendTheCodes = "https://dcdark.net/  Send the following codes:\n";
+static const char* const PROGMEM LINE1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789!*#@%";
+#define LINE1_LENGTH 42
+static const char* const PROGMEM EMPTY_STR = "";
+static const char* const PROGMEM DKN = "DKN-";
 // END REPEATED STRINGS
 
 //BEGIN GLOBAL VARS:
 //We are getting tight on space so I'm packing variables as tightly as I can
 struct _PackedVars {
-  unsigned short InSerialEpic : 1;
-  unsigned short AwaitingSerialAnswer: 1;
-  unsigned short LEDMode : 3; //what start up mode are we need (animation)
-  unsigned short Silent : 1;
+  uint32_t InSerialEpic : 1;
+  uint32_t AwaitingSerialAnswer: 1;
+  uint32_t DisplayAnswer:1;
+  uint32_t LEDMode : 3; //what start up mode are we need (animation)
+  uint32_t Silent : 1;
+  uint32_t LINE1Loc : 6;
+  uint32_t AnswerPos : 4;
 } PackedVars;
 
 uint16_t KEY[4];
@@ -110,12 +116,14 @@ DarkNetDisplay Display(OLED_RESET);
 
 
 //BEGIN MODE_DEFS
-#define MODE_COUNT 5
+#define MODE_COUNT 6
 #define MODE_MORSE_CODE_EPIC     0
 #define MODE_SNORING             1
 #define MODE_SERIAL_EPIC         2
 #define MODE_DISPLAY_BOARD_EPIC  3
-#define MODE_SHUTDOWN            4
+#define JUST_A_COOL_DISPLAY      4
+#define UBER_BADGE_SYNC          5
+#define MODE_SHUTDOWN            6
 //END MODE DEFS
 
 
@@ -211,6 +219,7 @@ unsigned char const morse[28] PROGMEM = {
  * or handles a received IR signal.
  */
 void delayAndReadIR(int pauseFor) {
+  pauseFor = pauseFor>0?pauseFor:0;
   uint32_t returnTime = millis() + pauseFor;
   while (millis() < returnTime) {
     if (digitalRead(BUTTON_PIN) == LOW) {
@@ -325,7 +334,7 @@ void sendMorseTwitter(uint16_t msgAddr) {
 }
 
 void sendSerialTwitter(uint16_t msgAddr) {
-  Serial.print(F("DKN-"));
+  Serial.print(DKN);
   for (unsigned char ndx = 0; ndx < 16; ndx++) {
     Serial.write(EEPROM.read(msgAddr+ndx));
   }
@@ -415,7 +424,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
 // Our buffer only needs to be big enough to hold a staza
 // to process.  Right now (2014) that's 12 bytes.  I'm over-sizing
 // 'cuz why not?
-#define RX_BUF_SIZE 24
+#define RX_BUF_SIZE 14
 unsigned char rxBuf[RX_BUF_SIZE];
 unsigned char head;
 
@@ -768,7 +777,10 @@ void dumpDatabaseToUSB() {
   digitalWrite(BACKLIGHT_3, LOW);
   digitalWrite(BACKLIGHT_4, LOW);
 
+//Serial.println("before");
   UsbKeyboard = new UsbKeyboardDevice();
+//Serial.println("after");
+ //Serial.println((int)UsbKeyboard,HEX);
   
   usbDelay(5000);
   // Give the USB a few seconds to settle in and be detected by the OS.
@@ -808,7 +820,7 @@ void dumpDatabaseToUSB() {
 }
 
 void sendUSBTwitter(int msgAddr) {
-  printUSB(F("DKN-"));
+  printUSB(DKN);
   uint8_t p;
   for (unsigned char ndx = 0; ndx < 16; ndx++) {
     p = EEPROM.read(msgAddr+ndx);
@@ -901,7 +913,7 @@ void setup() {
   // (If you add your own LEDs, you are by definition Uber so I can say that. :-)
   pinMode(BACKLIGHT_1, OUTPUT);
   digitalWrite(BACKLIGHT_1, LOW);
-  pinMode(BACKLIGHT_2, OUTPUT);
+  pinMode(BACKLIGHT_2, OUTPUT);  
   digitalWrite(BACKLIGHT_2, LOW);
   pinMode(BACKLIGHT_3, OUTPUT);
   digitalWrite(BACKLIGHT_3, LOW);
@@ -915,14 +927,9 @@ void setup() {
   //setup display board buttons
   pinMode(BUTTON_UP, INPUT);
   digitalWrite(BUTTON_UP, HIGH);  // Internal pull-up
-  pinMode(BUTTON_DOWN, INPUT);
-  digitalWrite(BUTTON_DOWN, HIGH);  // Internal pull-up
-  pinMode(BUTTON_LEFT, INPUT);
-  digitalWrite(BUTTON_LEFT, HIGH);  // Internal pull-up
-  pinMode(BUTTON_RIGHT, INPUT);
-  digitalWrite(BUTTON_RIGHT, HIGH);  // Internal pull-up
-  pinMode(BUTTON_CENTER, INPUT);
-  digitalWrite(BUTTON_CENTER, HIGH);  // Internal pull-up
+  
+  //pinMode(BUTTON_DOWN,INPUT);
+  //analogWrite(BUTTON_DOWN,
   
   delay(200);  // Reset "debounce"
 
@@ -945,6 +952,10 @@ void setup() {
   //set initial Pack Vars
   PackedVars.InSerialEpic = 0; // no serial received yet so we are not on serial epic
   PackedVars.AwaitingSerialAnswer = 0; //no serial epic active yet so we don't have a state for it
+  PackedVars.Silent = 0;
+  PackedVars.LINE1Loc = 0;
+  PackedVars.AnswerPos = 0;
+  PackedVars.DisplayAnswer = 0;
 
   // BLINKY SHINY!  
   PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
@@ -954,12 +965,11 @@ void setup() {
   #if 1
     //using sendMorse with flash string takes a really long time?????
     //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
-    PackedVars.LEDMode = MODE_SERIAL_EPIC;
+    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
+    //Serial.println(sizeof(UsbKeyboard));
     //writeNumMsgs(0);
   #endif
   
-  Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-  Display.display();
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
     Serial.println(F("Morse output of codes..."));
     sendMorseStr(F("E"));
@@ -972,6 +982,10 @@ void setup() {
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
     Serial.println(F("Uber Operative"));
     sendMorseStr(F("D"));
+    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    Display.display();
+    delayAndReadIR(1000);
+    Display.clearDisplay();
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -1036,7 +1050,7 @@ void rampLED(uchar ledStart, uchar ledEnd,
   delayAndReadIR(endTime-millis());
 }
 
-void GenerateResponseToCorrectSerialEpic(const char *answer) {
+void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   #if 0
   //hash or encrypt answer with key?
   MD5_CTX ctx;
@@ -1048,19 +1062,22 @@ void GenerateResponseToCorrectSerialEpic(const char *answer) {
   hasher.MD5Final(&Result[0],&ctx);
   #else
     unsigned char Result[18] = {0};
-    memcpy(&Result[0],&KEY[0],8);
-    memcpy(&Result[8],&GUID[0],8);
-    memcpy(&Result[16],answer,2);
+    memcpy(&Result[0],answer,2);
+    memcpy(&Result[2],&KEY[0],8);
+    memcpy(&Result[10],&GUID[0],8);
     for(int i=0;i<(sizeof(Result)-4);i+=2) {
      encrypt((uint16_t*)&Result[i]);  
     }
   #endif
-  //Serial.println(F("The daemon will accept the following: " ));
-  Serial.println(F("Send this to daemon: " ));
+  
+  Serial.println(SEND_TO_DAEMON);
+  if(onDisplay) Display.println(SEND_TO_DAEMON);
   for(int i=0;i<sizeof(Result);i++) {
-    Serial.print(Result[i],HEX); 
+    Serial.print(Result[i],HEX);
+    if(onDisplay) Display.print(Result[i],HEX);
   }
   Serial.println(EMPTY_STR);
+  if(onDisplay) Display.println(EMPTY_STR);
 }
 
 //drain all characters from serial buffer
@@ -1071,14 +1088,17 @@ void drainSerial() {
 }
 
 void loop() {
-  dumpDatabaseToSerial();  // Dump DB to serial
+  static uint8_t count = 0;
+  if(count==0) {
+    dumpDatabaseToSerial();  // Dump DB to serial
+  }
+  count = (count+1)%100;
   uint32_t start;
- 
- Display.clearDisplay();
+
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) { // Normal Morse code
     Serial.println(F("Begin Mode: 0"));
-    Display.fillCircle(Display.width()/2, Display.height()/2, 20, WHITE);
-    Display.display();
+    //Display.fillCircle(Display.width()/2, Display.height()/2, 20, WHITE);
+    //Display.display();
     sendMorseStr(F("HHVMORSE DASH "));
     sendMorseStr(GUID);
     sendMorseStr(F("HTTPS COLON SLASH SLASH DCDARK DOT NET    SEND CODES"));
@@ -1091,8 +1111,8 @@ void loop() {
     }
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring mode
     Serial.println(F("Begin Mode: 1"));
-    Display.fillRoundRect(10,10,Display.width()/2, Display.height()/2, 20, WHITE);
-    Display.display();
+    //Display.fillRoundRect(10,10,Display.width()/2, Display.height()/2, 20, WHITE);
+    //Display.display();
     for (unsigned char ndx = 0; ndx < 10; ndx++) {
       start = millis();
       rampLED(0, 248, 0, 124, 0, 124, 0, 124, 0, 124, 1600);
@@ -1114,12 +1134,6 @@ void loop() {
       delayAndReadIR(5000-(millis()-start));
     }
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
-    Display.drawPixel(10,10,WHITE);
-    Display.drawPixel(20,20,WHITE);
-    Display.drawPixel(30,30,WHITE);
-    Display.drawPixel(40,40,WHITE);
-    Display.drawPixel(50,50,WHITE);
-    Display.display();
     unsigned long SerialEpicTimer = millis();
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
@@ -1140,7 +1154,7 @@ void loop() {
         }
       } else {
         if(0==PackedVars.AwaitingSerialAnswer) { //send question
-          Serial.println(Questions[STANDARD_SERIAL_EPIC].Text);
+          Serial.println(F("What is the answer to all things?"));
           PackedVars.AwaitingSerialAnswer = 1;
         } else {
           if(Serial.available()) {
@@ -1153,7 +1167,7 @@ void loop() {
               }
               //Serial.println((char *)&serialAnswer[0]);
               if(strcmp(Questions[STANDARD_SERIAL_EPIC].Answer,&serialAnswer[0])==0) {
-                GenerateResponseToCorrectSerialEpic(Questions[STANDARD_SERIAL_EPIC].Answer);
+                GenerateResponseToCorrectEpic(Questions[STANDARD_SERIAL_EPIC].Answer,false);
                 break;
               } else {
                 Serial.println(iKnowNot);
@@ -1174,24 +1188,110 @@ void loop() {
     PackedVars.InSerialEpic = 0;
     PackedVars.AwaitingSerialAnswer = 0;
   } else if(PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
-    Display.clearDisplay();
-    uint16_t button = ((digitalRead(BUTTON_UP)==HIGH?VUP:0) | 
-      (digitalRead(BUTTON_DOWN)==HIGH?VDOWN:0) | (digitalRead(BUTTON_LEFT)==HIGH?VLEFT:0) |
-      (digitalRead(BUTTON_RIGHT)==HIGH?VRIGHT:0) | (digitalRead(BUTTON_CENTER)==HIGH?VCENTER:0));
+    if(!PackedVars.DisplayAnswer) {
+      start = millis();
+      static char Answer[10] = {'\0'};
+      static uint8_t count = 0;
+      Display.setTextWrap(true);
+      //Serial.println(digitalRead(BUTTON_UP)==LOW);
+      //Serial.println(analogRead(BUTTON_LEFT));
+      //Serial.println(analogRead(BUTTON_RIGHT));
+      //Serial.println(analogRead(BUTTON_DOWN));
+      //Serial.println(analogRead(BUTTON_CENTER));
+      uint16_t b1 = ( //(digitalRead(BUTTON_UP)==LOW?:0) | 
+          (analogRead(BUTTON_LEFT)<10?VLEFT:0) | 
+          (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
+          (analogRead(BUTTON_DOWN)<10?VDOWN:0) | 
+          (analogRead(BUTTON_CENTER)<10?VCENTER:0));
+      delay(4);
+      
+      uint16_t button = b1 & ( //(digitalRead(BUTTON_UP)==LOW?VUP:0) | 
+        (analogRead(BUTTON_LEFT)<10?VLEFT:0) | (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
+        (analogRead(BUTTON_DOWN)<10?VDOWN:0) | (analogRead(BUTTON_CENTER)<10?VCENTER:0));
+          
+      //Serial.println(button,BIN);
+      
+      if(button&VLEFT) {
+        PackedVars.LINE1Loc = PackedVars.LINE1Loc==0?LINE1_LENGTH-1:PackedVars.LINE1Loc-1;
+      } 
+      if(button&VRIGHT) {
+        PackedVars.LINE1Loc = ++PackedVars.LINE1Loc%LINE1_LENGTH;
+      }
+      if(button&VUP) {
+        short tmp = PackedVars.LINE1Loc-LINE1_LENGTH;
+        if(tmp<0) {
+         PackedVars.LINE1Loc=LINE1_LENGTH+PackedVars.LINE1Loc; 
+        } else {
+         PackedVars.LINE1Loc=tmp; 
+        }
+      }
+      if(button&VDOWN) {
+        PackedVars.LINE1Loc = (PackedVars.LINE1Loc+LINE1_LENGTH/2)%LINE1_LENGTH;
+      }
+      
+      if(button==(VRIGHT|VLEFT)) {
+         memset(&Answer[0],0,sizeof(Answer)); 
+         PackedVars.AnswerPos = 0;
+         PackedVars.LINE1Loc = 0;
+      }
+      
+      //Serial.println(PackedVars.LINE1Loc);
+      //Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];//pgm_read_byte(LINE1 + PackedVars.LINE1Loc);
+      
+      if(button&VCENTER) {
+        Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
+        PackedVars.AnswerPos = (PackedVars.AnswerPos+1)>=sizeof(Answer) ? sizeof(Answer) : PackedVars.AnswerPos+1;
+        //Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
+      }
+      
+      if(strcmp(&Answer[0],&DisplayEpicAnswer[0])==0) {
+        Display.clearDisplay();
+        Display.setCursor(0,0);
+        PackedVars.DisplayAnswer = 1;
+        GenerateResponseToCorrectEpic(&DisplayEpicAnswer[0],true);
+        //GenerateResponseToCorrectEpic(Questions[STANDARD_SERIAL_EPIC].Answer,true);
+        Display.display();
+      } else {
+        //Serial.println(&Answer[0]);
+        uint8_t location = 0;
+        Display.setCursor(0,0);
+        Display.println(F("Who started the \nDC Dark Net?"));
+        Display.println(EMPTY_STR);
+        Display.println(EMPTY_STR);
+        Display.print(&Answer[0]);
+        if((++count)&0x1) {
+          Display.println("_");
+        } else {
+          Display.println(LINE1[PackedVars.LINE1Loc]);
+        }
+        Display.println(EMPTY_STR);
+        Display.println(LINE1);
+        Display.display();
+        delay(20);
+      }
+    }
     
-    char Answer[8] = {'l','\0','\0','\0','\0','\0','\0','\0'};
-    uint8_t location = 0;
-    Display.setCursor(0,0);
-    Display.println(Questions[DISPLAY_EPIC].Text);
-    Display.println(EMPTY_STR);
-    Display.println(EMPTY_STR);
-    Display.println(Answer);
-    Display.println(LINE1);
-    Display.println(LINE2);
-    Display.display();
-    delay(20);
+    delayAndReadIR(1000);
+    
     //updateQuestion(Display);
     //updateDisplay(button,Display);
+  } else if (PackedVars.LEDMode == JUST_A_COOL_DISPLAY) {
+    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    
+    Display.drawLine(10,10,20,20,WHITE);
+    Display.drawLine(10,0,10,20,WHITE);
+    Display.drawLine(10,5,15,20,WHITE);
+    Display.display();
+    delayAndReadIR(1000);
+    Display.clearDisplay();
+    Display.drawPixel(10,10,WHITE);
+    Display.drawPixel(20,20,WHITE);
+    Display.drawPixel(30,30,WHITE);
+    Display.drawPixel(40,40,WHITE);
+    Display.drawPixel(50,50,WHITE);
+    delayAndReadIR(1000);
+    
+  } else if(PackedVars.LEDMode == UBER_BADGE_SYNC) {
     
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');

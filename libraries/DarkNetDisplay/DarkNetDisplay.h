@@ -128,10 +128,10 @@ class DarkNetDisplay : public Print {
  protected:
   uint8_t _width, _height, // Display w/h as modified by current rotation
     cursor_x, cursor_y;
-  uint16_t
+  uint8_t
 	 textcolor:1,
     textsize:4,
-    rotation:4,
+    rotation:2, //max value is 3: 0-3
     wrap:1;   // If set, 'wrap' text at right edge of display
 
  private:
