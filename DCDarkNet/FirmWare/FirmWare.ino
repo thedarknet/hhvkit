@@ -969,7 +969,7 @@ void setup() {
   EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
  
   
-  #if 1
+  #if 0
     //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
     PackedVars.LEDMode = MODE_SILK_SCREEN;
     //Serial.println(sizeof(UsbKeyboard));
