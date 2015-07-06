@@ -101,10 +101,13 @@ struct _PackedVars {
   uint32_t InSerialEpic : 1;
   uint32_t AwaitingSerialAnswer: 1;
   uint32_t DisplayAnswer:1;
-  uint32_t LEDMode : 3; //what start up mode are we need (animation)
+  uint32_t LEDMode : 4; //what start up mode are we need (animation)
   uint32_t Silent : 1;
   uint32_t LINE1Loc : 6;
   uint32_t AnswerPos : 4;
+  uint32_t hasSilk1 : 1;
+  uint32_t hasSilk2 : 1;
+  uint32_t hasSilk3 : 1;
 } PackedVars;
 
 uint16_t KEY[4];
@@ -116,14 +119,15 @@ DarkNetDisplay Display(OLED_RESET);
 
 
 //BEGIN MODE_DEFS
-#define MODE_COUNT 6
+#define MODE_COUNT 8
 #define MODE_MORSE_CODE_EPIC     0
 #define MODE_SNORING             1
 #define MODE_SERIAL_EPIC         2
 #define MODE_DISPLAY_BOARD_EPIC  3
-#define JUST_A_COOL_DISPLAY      4
-#define UBER_BADGE_SYNC          5
-#define MODE_SHUTDOWN            6
+#define MODE_JUST_A_COOL_DISPLAY  4
+#define MODE_SILK_SCREEN          5
+#define UBER_BADGE_SYNC          6
+#define MODE_SHUTDOWN            7
 //END MODE DEFS
 
 
@@ -956,35 +960,47 @@ void setup() {
   PackedVars.LINE1Loc = 0;
   PackedVars.AnswerPos = 0;
   PackedVars.DisplayAnswer = 0;
+  PackedVars.hasSilk1 = 0;
+  PackedVars.hasSilk2 = 0;
+  PackedVars.hasSilk3 = 0;
 
   // BLINKY SHINY!  
   PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
   EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
  
   
-  #if 0
+  #if 1
     //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
-    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
+    PackedVars.LEDMode = MODE_SILK_SCREEN;
     //Serial.println(sizeof(UsbKeyboard));
     //writeNumMsgs(0);
   #endif
   
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
     Serial.println(F("Morse output of codes..."));
-    sendMorseStr(F("E"));
+    sendMorse(LINE1[4]); //E
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
     Serial.println(F("Snoring..."));
-    sendMorseStr(F("I"));          // ..
+    sendMorse(LINE1[8]); // I
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
     Serial.println(F("Operative"));
-    sendMorseStr(F("T"));
+    sendMorse(LINE1[19]);  //T
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
     Serial.println(F("Uber Operative"));
-    sendMorseStr(F("D"));
+    sendMorse(LINE1[3]); //D
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(1000);
     Display.clearDisplay();
+  } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
+    Serial.println(F("Pretty lights!"));
+    sendMorse(LINE1[0]); //A
+  } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
+    Serial.println(F("Operative: Crypto"));
+    sendMorse(LINE1[1]); //B
+  } else if (PackedVars.LEDMode == UBER_BADGE_SYNC) {
+    Serial.println(F("Uber Operative: Crypto"));
+    sendMorse(LINE1[2]); //C
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -1086,12 +1102,31 @@ void drainSerial() {
   }
 }
 
+bool CheckFibonacci(uint8_t prime, uint32_t value) {
+  uint8_t c;
+  int32_t first = 0, second = 1, next;
+ 
+  for ( c = 0 ; c <=prime ; c++ ) {
+    if ( c <= 1 ) {
+      next = c;
+    } else {
+      next = first + second;
+      first = second;
+      second = next;
+    }
+    //Serial.println(next);
+  }
+  if(next==value) {
+    return true;
+  }
+  return false; 
+}
+
 void loop() {
   static uint8_t count = 0;
   if(count==0) {
     dumpDatabaseToSerial();  // Dump DB to serial
   }
-  count = (count+1)%100;
   uint32_t start;
 
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) { // Normal Morse code
@@ -1269,12 +1304,47 @@ void loop() {
         delay(20);
       }
     }
-    
+    beaconGUID();
     delayAndReadIR(1000);
     
     //updateQuestion(Display);
     //updateDisplay(button,Display);
-  } else if (PackedVars.LEDMode == JUST_A_COOL_DISPLAY) {
+  } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) { 
+    if(0==count) {
+      Serial.println(F("Enter the sequence: "));
+    }
+    //fibonacci numbers
+    char silkBuffer[6] = {0};
+    if(Serial.available()>0) {
+      for(int i=0;i<sizeof(silkBuffer)-1;i++) {
+         silkBuffer[i] = Serial.read();
+      }
+      //Serial.println(&silkBuffer[0]);
+      uint32_t num = atoi(&silkBuffer[0]);
+
+      if(!PackedVars.hasSilk1) {
+        if(CheckFibonacci(13,num)) PackedVars.hasSilk1 = 1;
+        else PackedVars.hasSilk1 = PackedVars.hasSilk2 = PackedVars.hasSilk3 = 0;
+      } else if(!PackedVars.hasSilk2) {
+        if(CheckFibonacci(17,num)) PackedVars.hasSilk2 = 1;
+        else PackedVars.hasSilk1 = PackedVars.hasSilk2 = PackedVars.hasSilk3 = 0;
+      } else if(!PackedVars.hasSilk3) {
+        if(CheckFibonacci(23,num)) PackedVars.hasSilk3 = 1;
+        else PackedVars.hasSilk1 = PackedVars.hasSilk2 = PackedVars.hasSilk3 = 0;
+      }
+      
+      if(PackedVars.hasSilk1 && PackedVars.hasSilk2 && PackedVars.hasSilk3) {
+        GenerateResponseToCorrectEpic(&LINE1[10],false); //start with K for Krux!
+      } else {
+        Serial.print(F("Received: "));
+        Serial.println((const char *)&silkBuffer[0]);
+      }
+    }
+    
+    drainSerial();
+    beaconGUID();
+    delayAndReadIR(1000);
+  } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     
     Display.drawLine(10,10,20,20,WHITE);
@@ -1295,6 +1365,7 @@ void loop() {
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
+  count = (count+1)%100;
 }
 
 //////////////////////////////////////////
