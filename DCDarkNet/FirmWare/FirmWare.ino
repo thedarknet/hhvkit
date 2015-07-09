@@ -60,6 +60,7 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 #define BACKLIGHT_2 10
 #define BACKLIGHT_1 11
 
+
 //BEGIN SERIAL EPIC VARS
 //bool to see if we have started the SerialEpic
 #define MAX_SERIAL_EPIC_TIME_MS 30000
@@ -970,8 +971,7 @@ void setup() {
  
   
   #if 0
-    //IDEA use 1 array of the aphabet and see if replace all the 'A' crap actually reduces space
-    PackedVars.LEDMode = MODE_SILK_SCREEN;
+    PackedVars.LEDMode = MODE_JUST_A_COOL_DISPLAY;
     //Serial.println(sizeof(UsbKeyboard));
     //writeNumMsgs(0);
   #endif
@@ -994,7 +994,13 @@ void setup() {
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
     Serial.println(F("Pretty lights!"));
+    srand(millis());
+    
     sendMorse(LINE1[0]); //A
+    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    Display.display();
+    delayAndReadIR(1000);
+    Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
     Serial.println(F("Operative: Crypto"));
     sendMorse(LINE1[1]); //B
@@ -1121,6 +1127,47 @@ bool CheckFibonacci(uint8_t prime, uint32_t value) {
   }
   return false; 
 }
+
+//static const short CGLH=16;
+
+//The life function is the most important function in the program.
+//It counts the number of cells surrounding the center cell, and 
+//determines whether it lives, dies, or stays the same.
+void life(unsigned int *array, char choice, short width, short height, unsigned int *temp) {
+  //Copies the main array to a temp array so changes can be entered into a grid
+  //without effecting the other cells and the calculations being performed on them.
+  memcpy(&temp[0],&array[0],sizeof(temp));
+  for(int j = 1; j < height-1; j++) {
+    for(int i = 1; i < width-1; i++) {	
+      if(choice == 'm') {
+        //The Moore neighborhood checks all 8 cells surrounding the current cell in the array.
+        int count = 0;
+        count = ((array[j-1]&(1<<i))>0?1:0) + ((array[j-1]&(1<<(i-1)))>0?1:0) 
+          + ((array[j]&(1<<(i-1)))>0?1:0) + ((array[j+1]&(1<<(i-1)))>0?1:0)
+          + ((array[j+1]&(1<<i))>0?1:0) + ((array[j+1]&(1<<(i+1)))>0?1:0) 
+          + ((array[j]&(1<<(i+1)))>0?1:0) + ((array[j-1]&(1<<(i+1)))>0?1:0);
+        if(count < 2 || count > 3)
+          temp[j]&=~(1<<i);
+        if(count == 3)
+          temp[j]|=(1<<i);
+      } else if(choice == 'v') {
+        //The Von Neumann neighborhood checks only the 4 surrounding cells in the array, (N, S, E, and W).
+        int count = 0;
+        count = ((array[j-1]&(1<<i))>0?1:0) + ((array[j]&(1<<(i-1)))>0?1:0) 
+          + ((array[j+1]&(1<<i))>0?1:0) + ((array[j]&(1<<(i+1)))>0?1:0);	
+        //The cell dies.  
+        if(count < 2 || count > 3)
+          temp[j]&=~(1<<i);
+          //The cell either stays alive, or is "born".
+        if(count == 3)
+          temp[j]|=(1<<i);
+      }				
+    }
+  }
+  //Copies the completed temp array back to the main array.
+  memcpy(&array[0],&temp[0],sizeof(temp));
+}
+
 
 void loop() {
   static uint8_t count = 0;
@@ -1345,21 +1392,57 @@ void loop() {
     beaconGUID();
     delayAndReadIR(1000);
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
-    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
-    
-    Display.drawLine(10,10,20,20,WHITE);
-    Display.drawLine(10,0,10,20,WHITE);
-    Display.drawLine(10,5,15,20,WHITE);
-    Display.display();
-    delayAndReadIR(1000);
+    start = millis();
+    static const int width = 32;
+    static const int height = 32;
+    char neighborhood = (start&1)==0?'m':'v';
+    short chanceToBeAlive = rand()%25;
+    unsigned int gol[height] = {0};
+    unsigned int tmp[height];
+    for(int j = 1; j < height-1; j++) {
+      for (int i = 1; i < width-1; i++) {
+        if((rand()%chanceToBeAlive)==0) {
+          //gol[j] &= ~(1<<i);
+          gol[j] |= (1<<i);
+        } else  {
+          //gol[j] |= (1<<i);
+        }
+      }
+    }
+    short generations = 10+(rand()%25);
     Display.clearDisplay();
-    Display.drawPixel(10,10,WHITE);
-    Display.drawPixel(20,20,WHITE);
-    Display.drawPixel(30,30,WHITE);
-    Display.drawPixel(40,40,WHITE);
-    Display.drawPixel(50,50,WHITE);
-    delayAndReadIR(1000);
-    
+    Display.setCursor(0,20);
+    Display.print(F("Max Generations: "));
+    //Display.print(F("Generations: ") );
+    Display.println(generations);
+    Display.display();
+    delayAndReadIR(4000);
+    for(int i=0;i<generations;i++) {
+      int count = 0;
+      Display.clearDisplay();	
+      for(int j = 1; j < height-1; j++) {
+        for(int k = 1; k < width-1; k++) {	
+          if((gol[j]&(k<<i)) !=0) {
+            Display.drawPixel(k*4,j*2,WHITE);
+            count++;
+          }
+ 	}
+      }
+      if(0==count) {
+        Display.setCursor(20,20);
+        Display.println(F("ALL DEAD"));
+        Display.print(F("After "));
+        Display.print(generations);
+        Display.println(F(" generations."));
+        Display.display();
+        break; 
+      } else {
+        Display.display();
+        life(&gol[0], neighborhood, width,height, &tmp[0]);
+        delayAndReadIR(200);
+      }
+    }
+    delayAndReadIR(2000);
   } else if(PackedVars.LEDMode == UBER_BADGE_SYNC) {
     
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
