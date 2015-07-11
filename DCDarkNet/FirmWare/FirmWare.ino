@@ -985,7 +985,7 @@ void setup() {
     sendMorse(LINE1[3]); //D
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
-    delayAndReadIR(1000);
+    delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
     Serial.println(F("Life!"));
@@ -994,7 +994,7 @@ void setup() {
     sendMorse(LINE1[0]); //A
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
-    delayAndReadIR(1000);
+    delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
     Serial.println(F("Operative: Crypto"));
