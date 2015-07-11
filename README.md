@@ -1,25 +1,24 @@
 hhvkit
 ======
 
-DefCon 22 Hardware Hacking Village Learn To Solder Kit, by:
-- Smitty, mark@halibut.com (concept, crypto, and firmware)
+DefCon 23 Hardware Hacking Village Learn To Solder Kit, by:
+- Smitty, mark@halibut.com (concept, crypto, and firmware (2014))
 - Krux, krux@thcnet.net (hardware)
+- Cmdc0de, comc0dez@gmail.com (firmware (2015))
 
 These are the files needed to build the firmware for the DefCon DarkNet
 ID Badge that was sold as the Hardware Hacking Village's Learn To Solder
-kit at DefCon 22 in 2014.
+kit at DefCon 23 in 2015.
 
 If you checkout the repo into your Arduino folder, it should just build
-on Arduino v1.5.7.  It has been modified for the newer GCC that comes 
-with 1.5.7, but should still compile on 1.5.6 and earlier (haven't tested
-this myself.)
+on Arduino v1.6.4.  
 
 It creates the following directories:
 
-DCDarkNet/IR_Quest_2014/
+DCDarkNet/Firmware/
 - Contains the code.
 
-DCDarkNet/IR_Quest_2014/build/
+DCDarkNet/Firmware/build/
 - The automated build/burn system used to program over 300 chips in 
   just a couple hours. (ZIF socket not included. Some assembly required.)
 
@@ -37,10 +36,16 @@ libraries/UsbKeyboard/
   [1] https://code.google.com/p/vusb-for-arduino/
 
 
+libraries/DarkNetDisplay
+- Modified version of the adafruit gfx and ssd_1306 libraries to work with our 
+  darknet badge display
+	https://github.com/adafruit/Adafruit-GFX-Library
+	https://github.com/adafruit/Adafruit_SSD1306
+
 Building and Burning
 ======
 
-All the following commands are run inside DCDarkNet/IR_Quest_2014/build/
+All the following commands are run inside DCDarkNet/Firmware/build/
 This section is really only relevant if you are burning this code into
 a whole bunch of chips.  If you're just burning your own chip, or are
 playing around with different code, you're better off just using the 
@@ -54,7 +59,7 @@ was already programmed with your GUID and private key, which will persist
 through a re-flash.  But if you have a new chip, you'll need to program
 your GUID and private key into the chip.
 
-We don't currently (2014-08-10) have a way to generate new GUIDs and 
+We don't currently (2015-08-2) have a way to generate new GUIDs and 
 keys for you, nor to take in GUIDs and keys from you to put into the DB.
 So you're welcome to play with this code and use it for other things, 
 but unless you got a chip from us at DefCon, you won't be able to 
@@ -79,9 +84,9 @@ whatever it's called.  This will make Arduino NOT delete the temporary
 build directories it creates in /tmp.  Then build the code with Ctrl-R.
 That will burn into /tmp/build[some number].tmp/   Find the most recent
 build directory (the one that was likely just created or updated), and
-copy IR_Quest_2014.cpp.hex to your build/ directory:
+copy Firmware.cpp.hex to your build/ directory:
 
-build$ cp /tmp/build[some number].tmp/IR_Quest_2014.cpp.hex .
+build$ cp /tmp/build[some number].tmp/Firmware.cpp.hex .
 
 You will have to do this EVERY TIME you build.
 
@@ -110,7 +115,7 @@ build$ ./burn-eeprom.sh GUIDGUID
 
 After those two are done, the program can be written to flash using
 the FTDI serial console cable (it's much faster than using the ICSP.)
-burn-flash.sh takes the local file IR_Quest_2014.cpp.hex you copied 
+burn-flash.sh takes the local file Firmware.cpp.hex you copied 
 above.
 
 build$ ./burn-flash.sh
