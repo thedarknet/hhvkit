@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-$numCodes = 350;
+$numCodes = 650;
 #$numCodes = 10;
 
 use Math::Random::ISAAC;

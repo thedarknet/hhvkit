@@ -783,13 +783,13 @@ void dumpDatabaseToUSB() {
   // Give the USB a few seconds to settle in and be detected by the OS.
   //if (waitForHost(10000)) {
   if(usbInterruptIsReady()) {
-    SERIAL_INFO_LN(F("USB is ready."));
+    Serial.println(F("USB is ready."));
     usbDelay(100);
     SERIAL_TRACE_LN("back from delay");
-    printUSB(sendTheCodes);
-    printUSB(F("HHVUSB-"));
+    //printUSB(sendTheCodes);
+    printUSB("HHVUSB-");
     printUSB(GUID);
-    printUSB(ENDLINE);
+    printUSB("\n");
     //Serial.println("back from printing");
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
