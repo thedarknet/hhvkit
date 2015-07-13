@@ -43,7 +43,7 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 // Switch pin
 #define BUTTON_PIN 12
 
-#define BUTTON_UP        10 //which is the 16th counted pin
+#define BUTTON_UP        10 //which is the 16th counted pin //wont work bc also used for backlights ops!
 #define BUTTON_LEFT      A3
 #define BUTTON_RIGHT     A0
 #define BUTTON_DOWN      A2
@@ -111,7 +111,7 @@ DarkNetDisplay Display(OLED_RESET);
 
 
 //BEGIN MODE_DEFS
-#define MODE_COUNT 8
+#define MODE_COUNT 9
 #define MODE_MORSE_CODE_EPIC     0
 #define MODE_SNORING             1
 #define MODE_SERIAL_EPIC         2
@@ -136,12 +136,14 @@ DarkNetDisplay Display(OLED_RESET);
 #define GUID_SIZE 8
 #define MORSE_CODE_ENCODED_MSG 8
 #define TOTAL_STORAGE_SIZE_MSG (GUID_SIZE+MORSE_CODE_ENCODED_MSG)
-#define MAX_MSG_ADDR = (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS)
-
+#define MAX_MSG_ADDR = (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS) //960
+#define START_EPIC_RUN_TIME_STORAGE MAX_MSG_ADDR+20 //cushion
+#define UBER_CRYPTO_KEY_ADDR START_EPIC_RUN_TIME_STORAGE
+#define MAX_EPIC_RUN_TIME_STORAGE START_EPIC_RUN_TIME_STORAGE+16
 
 // END EEPROM COUNT LOCATION
 
-const char *const ENDLINE PROGMEM = "\n";
+#define ENDLINE F("\n")
 
 // Morse Code constants
 unsigned char const morse[28] PROGMEM = {
@@ -786,10 +788,10 @@ void dumpDatabaseToUSB() {
     Serial.println(F("USB is ready."));
     usbDelay(100);
     SERIAL_TRACE_LN("back from delay");
-    //printUSB(sendTheCodes);
-    printUSB("HHVUSB-");
+    printUSB(sendTheCodes);
+    printUSB(F("HHVUSB-"));
     printUSB(GUID);
-    printUSB("\n");
+    printUSB(ENDLINE);
     //Serial.println("back from printing");
     uint16_t numMsgs = getNumMsgs();
     if (isNumMsgsValid(numMsgs)) {
@@ -1430,7 +1432,7 @@ void loop() {
     }
     delayAndReadIR(2000);
   } else if(PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
-    
+    delayAndReadIR(2000);
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
