@@ -27,6 +27,7 @@
  * 27: SDA
  * 28: SCL
  */
+#define MAKE_ME_A_CONTEST_RUNNER 0
 
 // IR Parameters
 #define IR_RX 8
@@ -71,11 +72,11 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 
 // BEGIN STRINGS
 //string that starts serial epic
-static const char* START_SERIAL_EPIC_STRING = "CMDCODE";
-static const char* SERIAL_PORT_ANSWER = "42";
+static const char* START_SERIAL_EPIC_STRING = "JOSHUA";
+//static const char* SERIAL_PORT_ANSWER = "42";
 #define SERIAL_PORT_QUESTION F("What is the answer to all things?")
 //length of serial string
-#define MIN_SERIAL_LEN  7
+#define MIN_SERIAL_LEN  6
 #define SEND_TO_DAEMON F("Send this to daemon: ")
 #define DisplayEpicText F("Who started the \nDC Dark Net?")
 static const char* DisplayEpicAnswer = "SMITTY";
@@ -100,6 +101,8 @@ struct _PackedVars {
   uint32_t hasSilk1 : 1;
   uint32_t hasSilk2 : 1;
   uint32_t hasSilk3 : 1;
+  uint32_t isContestRunner : 1;
+  uint32_t hasCompletedUberCrypto : 1;
 } PackedVars;
 
 uint16_t KEY[4];
@@ -129,17 +132,17 @@ DarkNetDisplay Display(OLED_RESET);
 #define RESET_STATE_ADDR 1020
 #define GUID_ADDR 1012
 #define KEY_ADDR 1004
-#define PERSISTENT_EPIC_FLAG_ADDR 1000
 
 // Maximum number of messages
 #define MAX_NUM_MSGS 60
 #define GUID_SIZE 8
 #define MORSE_CODE_ENCODED_MSG 8
 #define TOTAL_STORAGE_SIZE_MSG (GUID_SIZE+MORSE_CODE_ENCODED_MSG)
-#define MAX_MSG_ADDR = (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS) //960
-#define START_EPIC_RUN_TIME_STORAGE MAX_MSG_ADDR+20 //cushion
-#define UBER_CRYPTO_KEY_ADDR START_EPIC_RUN_TIME_STORAGE
-#define MAX_EPIC_RUN_TIME_STORAGE START_EPIC_RUN_TIME_STORAGE+16
+#define MAX_MSG_ADDR                     (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS) //960
+#define START_EPIC_RUN_TIME_STORAGE       MAX_MSG_ADDR+20 //cushion 980
+#define UBER_CRYPTO_HAS_FINISED_SIG       START_EPIC_RUN_TIME_STORAGE //magic bit pattern as eeproms where not set to 0 last year.... :(
+#define UBER_CRYPTO_KEY_ADDR              UBER_CRYPTO_HAS_FINISED_SIG+4
+#define MAX_EPIC_RUN_TIME_STORAGE         START_EPIC_RUN_TIME_STORAGE+16
 
 // END EEPROM COUNT LOCATION
 
@@ -467,6 +470,7 @@ void writeWord(uint8_t *buf) {
  *   0y = Bob's encrypted reply to Alice's GUID beacon  (Bob -> Alice)
  *   0a = Bob's GUID (Bob -> Alice, sent immediately after 0y)
  *   0b = Alice's encrypted reply to Bob's GUID  (Alice -> Bob)
+ *   0w = Message from DarkNet Agent after you've solved the 6 part silk screen crypto
  */
 unsigned char readWordFromBuf(uint8_t *packedBuf, unsigned char *strDst = 0) {
   // head points to the next character after the \r\n at the end
@@ -511,7 +515,7 @@ unsigned char isValidWord() {
   
   // We have a good framing. Future failures will be reported.
   char c = rxBufNdx(-11);
-  if (c!='x' && c!='y' && c!='a' && c!='b') {
+  if (c!='x' && c!='y' && c!='a' && c!='b' && c!='w') {
     Serial.println(F("Bad rx header: "));
     Serial.println(c);
     return false;
@@ -548,6 +552,29 @@ unsigned char readWordFromIR() {
       return 1;
   }
   return 0;
+}
+
+int weHaveSilkScreenEpic() {
+  digitalWrite(BACKLIGHT_1, HIGH);
+  Serial.println(F("weHaveSilkScreenEpic"));
+  // Read the 0w from content table.
+  uint8_t encodeBytes[4] = {0, 0, 0, 0};
+  if (!readWordFromBuf(encodeBytes)) {
+    Serial.println(F("Error reading 0w from rxBuf."));
+    return -1;
+  }
+  digitalWrite(BACKLIGHT_2, HIGH);
+
+  digitalWrite(BACKLIGHT_3, HIGH);
+  
+  uint8_t signatureBytes[4] = {'U','B','E','R'};
+  for(int i=0;i<sizeof(encodeBytes);++i) {
+    EEPROM.write(UBER_CRYPTO_KEY_ADDR+i, encodeBytes[i]);
+    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+i,signatureBytes[i]);
+  }
+  PackedVars.hasCompletedUberCrypto = 1;
+  Serial.println(F("done weHaveSilkScreenEpic"));
+  return UBER_CRYPTO_KEY_ADDR;
 }
 
 int weAreAlice() {
@@ -673,11 +700,13 @@ void processIR(unsigned char c) {
     // 0x means we heard someone else's beacon,
     //Serial.println(F("Bob"));
     msgAddr = weAreBob();
-  }
-  else if (flag == 'y') {
+  } else if (flag == 'y') {
     // 0y means someone else is responding to our beacon.
     //Serial.println(F("Alice"));
     msgAddr = weAreAlice();
+  } else if (flag == 'w') {
+    //not writing another badge guid but writting key from darknet agent's badge
+    msgAddr = weHaveSilkScreenEpic();
   }
   
   unsigned char ndx;
@@ -718,6 +747,21 @@ void processIR(unsigned char c) {
 
   sendSerialTwitter(msgAddr);
   sendMorseTwitter(msgAddr);
+}
+
+void dumpCrytpoData() {
+  if(PackedVars.hasCompletedUberCrypto) {
+    char code[5] = {'\0'};
+    for(int i=0;i<4;i++) {
+      code[i] = EEPROM.read(UBER_CRYPTO_KEY_ADDR+i);
+    }
+    GenerateResponseToCorrectEpic(&code[0],!PackedVars.isContestRunner);
+  } else {
+    if(!PackedVars.isContestRunner) {
+      Display.println(F("Complete the 6 part crypto"));
+      Serial.println(F("Complete the 6 part crypto"));
+    }
+  }
 }
 
 void dumpDatabaseToSerial() {
@@ -935,6 +979,7 @@ void setup() {
   // Setup the IR buffers and timers.
   nextBeacon = millis();  
   clearRxBuf();
+  
 
   // Pull GUID and Private key from EEPROM
   for (uchar ndx=0; ndx < 8; ndx++) {
@@ -948,6 +993,19 @@ void setup() {
   KEY[2] = (EEPROM.read(KEY_ADDR+4)<<8) + EEPROM.read(KEY_ADDR+5);  
   KEY[3] = (EEPROM.read(KEY_ADDR+6)<<8) + EEPROM.read(KEY_ADDR+7);  
   
+  
+  #if MAKE_ME_A_CONTEST_RUNNER //make contest runner badge
+    Serial.println(F("making badge contest runner"));
+    PackedVars.isContestRunner = 1;
+    
+    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG,'U');
+    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+1,'B');
+    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+2,'E');
+    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+3,'R');
+  #else
+    PackedVars.isContestRunner = 0;
+  #endif
+  
   //set initial Pack Vars
   PackedVars.InSerialEpic = 0; // no serial received yet so we are not on serial epic
   PackedVars.AwaitingSerialAnswer = 0; //no serial epic active yet so we don't have a state for it
@@ -958,6 +1016,8 @@ void setup() {
   PackedVars.hasSilk1 = 0;
   PackedVars.hasSilk2 = 0;
   PackedVars.hasSilk3 = 0;
+  PackedVars.hasCompletedUberCrypto = EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG)=='U' &&
+    EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+1)=='B' && EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+2)=='E' && EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+3)=='R';
 
   // BLINKY SHINY!  
   PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
@@ -965,7 +1025,9 @@ void setup() {
  
   
   #if 0
-    PackedVars.LEDMode = MODE_JUST_A_COOL_DISPLAY;
+    PackedVars.LEDMode = MODE_SERIAL_EPIC;
+    Serial.print(F("is contest runner: "));
+    Serial.println(PackedVars.isContestRunner);
     //Serial.println(sizeof(UsbKeyboard));
     //writeNumMsgs(0);
   #endif
@@ -1004,6 +1066,10 @@ void setup() {
   } else if (PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
     Serial.println(F("Uber Operative: Crypto"));
     sendMorse(LINE1[2]); //C
+    Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
+    Display.display();
+    delayAndReadIR(3000);
+    Display.clearDisplay();
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
     Serial.println(F("Shutting down..."));
     //sendMorse('M');          // --
@@ -1223,9 +1289,11 @@ void loop() {
         }
       } else {
         if(0==PackedVars.AwaitingSerialAnswer) { //send question
-          Serial.println(F("What is the answer to all things?"));
+          //Serial.println(F("What is the answer to all things?"));
           PackedVars.AwaitingSerialAnswer = 1;
+          GenerateResponseToCorrectEpic(START_SERIAL_EPIC_STRING,false);
         } else {
+          #if 0
           if(Serial.available()) {
             PackedVars.AwaitingSerialAnswer = 0;
             if(Serial.available() == strlen(SERIAL_PORT_ANSWER)) {
@@ -1245,6 +1313,7 @@ void loop() {
               Serial.println(iKnowNot);
             }
           }
+          #endif
         }
       }
       drainSerial();
@@ -1432,7 +1501,31 @@ void loop() {
     }
     delayAndReadIR(2000);
   } else if(PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
-    delayAndReadIR(2000);
+    Display.clearDisplay();
+    Display.setCursor(0,0);
+    if(PackedVars.isContestRunner) {
+      Display.println(F("Press center button to send: "));
+      Display.display();
+      start = millis();
+      while((millis()-start)<2000) {
+        if(analogRead(BUTTON_CENTER)<5) {
+           delay(4);
+           //Serial.println(analogRead(BUTTON_CENTER));
+           if(analogRead(BUTTON_CENTER)<5) {
+             Display.println(F("SENDING..."));
+             Display.display();
+             irSerial.println(F("0wDEAD0911"));
+             Display.println(F("SENT!"));
+             Display.display();
+             break;
+           }
+        }
+      }
+    }
+    //Display.clearDisplay();
+    dumpCrytpoData();
+    Display.display();
+    delayAndReadIR(3000);
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
