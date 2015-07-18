@@ -998,10 +998,11 @@ void setup() {
     Serial.println(F("making badge contest runner"));
     PackedVars.isContestRunner = 1;
     
-    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG,'U');
-    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+1,'B');
-    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+2,'E');
-    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+3,'R');
+    //complete uber silk screen epic
+    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG,'U');
+    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+1,'B');
+    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+2,'E');
+    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+3,'R');
   #else
     PackedVars.isContestRunner = 0;
   #endif
