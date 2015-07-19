@@ -48,8 +48,7 @@ http://arduiniana.org.
 #define GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #endif
 
-class IRSerial : public Stream
-{
+class IRSerial : public Stream {
 private:
   // per object data
   uint8_t _receivePin;
