@@ -42,7 +42,7 @@ def modeFlashBootloader():
     lcd.clear();
     lcd.write("Burning Fuses")
     
-    rval = AVRProg.runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -e -Ulock:w:0x3F:m -Uefuse:w:0x05:m -Uhfuse:w:0xDE:m -Ulfuse:w:0xFF:m', DEBUG)
+    rval = AVRProg.runAvrdudeCommand('avrdude -v -c ' + AVRProg.PROGRAMMER + ' -p m328p -P ' + AVRProg.PROGRAMMERS[AVRProg.PROGRAMMER] + ' -e -Ulock:w:0x3F:m -Uefuse:w:0x05:m -Uhfuse:w:0xDE:m -Ulfuse:w:0xFF:m', DEBUG)
     
     if rval == 1:
         print("Error burning fuses")
@@ -53,7 +53,7 @@ def modeFlashBootloader():
     lcd.clear();
     lcd.write("Flash Bootloader")
     
-    rval = AVRProg.runAvrdudeCommand('avrdude -v -c ' + PROGRAMMER + ' -p m328p -P ' + PROGRAMMERS[PROGRAMMER] + ' -Uflash:w:./optiboot_atmega328.hex:i -Ulock:w:0x0F:m', DEBUG)
+    rval = AVRProg.runAvrdudeCommand('avrdude -v -c ' + AVRProg.PROGRAMMER + ' -p m328p -P ' + AVRProg.PROGRAMMERS[AVRProg.PROGRAMMER] + ' -Uflash:w:./optiboot_atmega328.hex:i -Ulock:w:0x0F:m', DEBUG)
     if rval == 1:
         print("Error flashing bootloader")
         return rval
@@ -73,7 +73,7 @@ MODES = {   'readFlash': modeReadFlash,
 # 
 if len(sys.argv) < 3:
     print("Usage: " + sys.argv[0] + " <programmer> <mode>")
-    print("\nSupported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(PROGRAMMERS) + "")
+    print("\nSupported programmers(Use 'auto' if you're not sure):\n    " + '\n    '.join(AVRProg.PROGRAMMERS) + "")
     print("\nSupported Modes:\n    " + '\n    '.join(MODES) + "")
     sys.exit(1)
 
