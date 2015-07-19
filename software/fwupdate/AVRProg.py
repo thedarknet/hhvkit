@@ -35,7 +35,8 @@ lcd = DummyLCDController.Controller()
 # 
 pbStrings = [   ['reading flash memory','Reading Flash'],
                 ['reading eeprom memory','Reading EEPROM'],
-                ['reading on-chip flash data','Verify Flash'] ]
+                ['reading on-chip flash data','Verify Flash'],
+                ['writing flash','Write Flash'] ]
 
 errorStrings = [    ['No such device', 'ERR: Programmer'],
                     ['did not find any USB device', 'ERR: Programmer'],
@@ -74,7 +75,7 @@ def runAvrdudeCommand(command, debugPrint = False):
             if char == '\n' or char == '\r':
                 # Only finish 'progress bar' mode after a newline
                 # when the progress bar is actually displayed
-                if 'Reading' in line:
+                if ('Reading' in line) or ('Writing' in line):
                     liveread = False
 
                 line = ''
