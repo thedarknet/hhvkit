@@ -7,6 +7,7 @@ import Adafruit_BBIO.GPIO as GPIO
 import Adafruit_BBIO.UART as UART
 import SFLCDController
 import AVRProg
+import os.path
 import time
 import sys
 
@@ -67,6 +68,13 @@ lcd.clear()
 
 AVRProg.lcd = lcd
 AVRProg.PROGRAMMER = 'arduino'
+
+if os.path.exists('/dev/ttyUSB0') is False:
+    lcd.clear()
+    lcd.write('DCDarkNet ERR:  no /dev/ttyUSB0')
+    
+while os.path.exists('/dev/ttyUSB0') is False:
+    time.sleep(5)
 
 # TODO - add updater/error count
 while True:
