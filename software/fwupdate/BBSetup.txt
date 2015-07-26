@@ -13,7 +13,28 @@ sudo ln -s $PWD/10-avrisp.rules /etc/udev/rules.d/
 avrdude -v -c avrispmkII -p m328p -P usb
 avrdude -v -c avrispmkII -p m328p -P usb -U flash:r:flash.bin:r
 
-*run once in python as root*
+*run once in python as root (not needed if using service)*
 TODO - automate this
 import Adafruit_BBIO.UART as UART
 UART.setup("UART4")
+
+ls -l of files that need to be placed in /home/debian/darknet/:
+-rw-r--r-- 1 debian debian  1959 Jul 26 18:01 autoupdate.py
+-rw-r--r-- 1 debian debian  4775 Jul 26 18:04 AVRProg.py
+-rwxr-xr-x 1 debian debian   102 Jul 26 18:02 darknet.sh
+-rw-r--r-- 1 debian debian   769 Jul 26 18:05 DummyLCDController.py
+-rw-r--r-- 1 debian debian 65141 Jul 26 18:02 firmware.hex
+-rw-r--r-- 1 debian debian  2830 Jul 26 18:04 SFLCDController.py
+
+Service Misc Notes:
+from: https://gist.github.com/tstellanova/7323116
+
+darknet.service goes in /lib/systemd/system/darknet.service
+
+sudo ln -s /lib/systemd/system/darknet.service /etc/systemd/system/darknet.service
+
+sudo systemctl daemon-reload
+sudo systemctl enable darknet.service
+sudo systemctl start darknet.service
+
+sudo systemctl stop darknet.service

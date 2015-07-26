@@ -1,0 +1,9 @@
+[Unit]
+Description=DCDarkNet Programmer Service
+
+[Service]
+Type=simple
+ExecStart=/home/debian/darknet/darknet.sh
+
+[Install]
+WantedBy=multi-user.target
