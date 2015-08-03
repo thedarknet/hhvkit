@@ -1140,6 +1140,20 @@ void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   memcpy(&Result[0],answer,2);
   memcpy(&Result[2],&KEY[0],8);
   memcpy(&Result[10],&GUID[0],8);
+
+#if 0
+  Serial.println(F("input"));
+  for(int i=0;i<sizeof(Result);i++) {
+    Serial.print(Result[i],HEX);
+  }
+  Serial.println(EMPTY_STR);
+  for(int i=0;i<sizeof(KEY);i++) {
+    Serial.print(KEY[i],HEX);
+  }
+  Serial.println(EMPTY_STR);
+  Serial.println(&GUID[0]);
+#endif
+
   for(int i=0;i<(sizeof(Result)-4);i+=2) {
     encrypt((uint16_t*)&Result[i]);  
   }
