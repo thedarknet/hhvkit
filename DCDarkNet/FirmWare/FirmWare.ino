@@ -1026,7 +1026,7 @@ void setup() {
  
   
   #if 0
-    PackedVars.LEDMode = MODE_SERIAL_EPIC;
+    PackedVars.LEDMode = MODE_SILK_SCREEN;
     Serial.print(F("is contest runner: "));
     Serial.println(PackedVars.isContestRunner);
     //Serial.println(sizeof(UsbKeyboard));
@@ -1142,15 +1142,23 @@ void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   memcpy(&Result[10],&GUID[0],8);
 
 #if 0
-  Serial.println(F("input"));
+  Serial.println(F("18 byte vector before encrypt"));
   for(int i=0;i<sizeof(Result);i++) {
     Serial.print(Result[i],HEX);
   }
   Serial.println(EMPTY_STR);
-  for(int i=0;i<sizeof(KEY);i++) {
+  Serial.println(F("Key HEX"));
+  for(int i=0;i<4;i++) {
     Serial.print(KEY[i],HEX);
   }
   Serial.println(EMPTY_STR);
+  Serial.println(F("Key shorts"));
+  for(int i=0;i<4;i++) {
+    Serial.print(KEY[i]);
+    Serial.print(" ");
+  }
+  Serial.println(EMPTY_STR);
+  Serial.println(F("GUID"));
   Serial.println(&GUID[0]);
 #endif
 
@@ -1161,6 +1169,9 @@ void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   Serial.println(SEND_TO_DAEMON);
   if(onDisplay) Display.println(SEND_TO_DAEMON);
   for(int i=0;i<sizeof(Result);i++) {
+    if(Result[i]<16) { //otherwise we'll get just something like 6 rather than 06
+      Serial.print("0");
+    }
     Serial.print(Result[i],HEX);
     if(onDisplay) Display.print(Result[i],HEX);
   }
