@@ -250,8 +250,8 @@ void delayAndReadIR(int pauseFor) {
 // to send another beacon.
 void beaconGUID(void) {
   if (millis() >= nextBeacon) {
-    if(PackedVars.Silent) {
-      SERIAL_INFO_LN(F("Ping!"));
+    if(!PackedVars.Silent) {
+      Serial.println(F("Ping!"));
     }
     // Add a little randomness so devices don't get sync'd up.
     // Will beacon on average every 5 seconds.
@@ -426,7 +426,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
 // Our buffer only needs to be big enough to hold a staza
 // to process.  Right now (2014) that's 12 bytes.  I'm over-sizing
 // 'cuz why not?
-#define RX_BUF_SIZE 14
+#define RX_BUF_SIZE 32
 unsigned char rxBuf[RX_BUF_SIZE];
 unsigned char head;
 
@@ -1296,6 +1296,7 @@ void loop() {
     delayAndReadIR(2000-(millis()-start));
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
     unsigned long SerialEpicTimer = millis();
+    PackedVars.Silent = 1;
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
       start = millis();
@@ -1440,6 +1441,7 @@ void loop() {
     //updateQuestion(Display);
     //updateDisplay(button,Display);
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) { 
+    PackedVars.Silent = 1;
     if(0==count) {
       Serial.println(F("Enter the sequence: "));
     }
@@ -1527,6 +1529,7 @@ void loop() {
     }
     delayAndReadIR(2000);
   } else if(PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
+    PackedVars.Silent = 1;
     Display.clearDisplay();
     Display.setCursor(0,0);
     if(PackedVars.isContestRunner) {
