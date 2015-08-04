@@ -44,7 +44,7 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 // Switch pin
 #define BUTTON_PIN 12
 
-#define BUTTON_UP        10 //which is the 16th counted pin //wont work bc also used for backlights ops!
+#define BUTTON_UP        13 //which is the 16th counted pin //wont work bc also used for backlights ops!
 #define BUTTON_LEFT      A3
 #define BUTTON_RIGHT     A0
 #define BUTTON_DOWN      A2
@@ -987,9 +987,6 @@ void setup() {
   pinMode(BUTTON_UP, INPUT);
   digitalWrite(BUTTON_UP, HIGH);  // Internal pull-up
   
-  //pinMode(BUTTON_DOWN,INPUT);
-  //analogWrite(BUTTON_DOWN,
-  
   delay(200);  // Reset "debounce"
 
   // Setup the IR buffers and timers.
@@ -1052,26 +1049,26 @@ void setup() {
 
   BlinkMainLEDForMode(PackedVars.LEDMode);
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
-    Serial.println(F("Morse output of codes..."));
+    Serial.println(F("Morse output of codes...0"));
     sendMorse(LINE1[4]); //E
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
-    Serial.println(F("Snoring..."));
+    Serial.println(F("Snoring...1"));
     sendMorse(LINE1[8]); // I
   } else if (PackedVars.LEDMode == MODE_BACKLIGHT ) {
-    Serial.println(F("BackLight"));
+    Serial.println(F("BackLight...2"));
     sendMorse(LINE1[18]); // S
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
-    Serial.println(F("Operative"));
+    Serial.println(F("Operative...3"));
     sendMorse(LINE1[19]);  //T
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
-    Serial.println(F("Uber Operative"));
+    Serial.println(F("Uber Operative...4"));
     sendMorse(LINE1[3]); //D
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
-    Serial.println(F("Life!"));
+    Serial.println(F("Life!...5"));
     srand(millis());
     
     sendMorse(LINE1[0]); //A
@@ -1080,17 +1077,17 @@ void setup() {
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
-    Serial.println(F("Operative: Crypto"));
+    Serial.println(F("Operative: Crypto...6"));
     sendMorse(LINE1[1]); //B
   } else if (PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
-    Serial.println(F("Uber Operative: Crypto"));
+    Serial.println(F("Uber Operative: Crypto...7"));
     sendMorse(LINE1[2]); //C
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
-    Serial.println(F("Shutting down..."));
+    Serial.println(F("Shutting down...8"));
     //sendMorse('M');          // --
     // Except, ya know, do it while not listening for IR.
     digitalWrite(LED_PIN, HIGH);
