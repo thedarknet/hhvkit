@@ -1040,7 +1040,7 @@ void setup() {
  
   
   #if 0
-    PackedVars.LEDMode = MODE_SILK_SCREEN;
+    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
     Serial.print(F("is contest runner: "));
     Serial.println(PackedVars.isContestRunner);
     //Serial.println(sizeof(UsbKeyboard));
@@ -1378,14 +1378,14 @@ void loop() {
       //Serial.println(analogRead(BUTTON_RIGHT));
       //Serial.println(analogRead(BUTTON_DOWN));
       //Serial.println(analogRead(BUTTON_CENTER));
-      uint16_t b1 = ( //(digitalRead(BUTTON_UP)==LOW?:0) | 
+      uint16_t b1 = ( (digitalRead(BUTTON_UP)==LOW?:0) | 
           (analogRead(BUTTON_LEFT)<10?VLEFT:0) | 
           (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
           (analogRead(BUTTON_DOWN)<10?VDOWN:0) | 
           (analogRead(BUTTON_CENTER)<10?VCENTER:0));
       delay(4);
       
-      uint16_t button = b1 & ( //(digitalRead(BUTTON_UP)==LOW?VUP:0) | 
+      uint16_t button = b1 & ( (digitalRead(BUTTON_UP)==LOW?VUP:0) | 
         (analogRead(BUTTON_LEFT)<10?VLEFT:0) | (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
         (analogRead(BUTTON_DOWN)<10?VDOWN:0) | (analogRead(BUTTON_CENTER)<10?VCENTER:0));
       
@@ -1416,7 +1416,6 @@ void loop() {
       if(button&VCENTER) {
         Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
         PackedVars.AnswerPos = (PackedVars.AnswerPos+1)>=sizeof(Answer) ? sizeof(Answer) : PackedVars.AnswerPos+1;
-        //Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
       }
       
       if(strcmp(&Answer[0],&DisplayEpicAnswer[0])==0) {
@@ -1445,8 +1444,9 @@ void loop() {
         delay(20);
       }
     }
-    beaconGUID();
-    delayAndReadIR(1000);
+    //8/3 DAC turning off the ability to sync IR with another bade in this mode
+    //beaconGUID();
+    delayAndReadIR(400);
     
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) { 
     PackedVars.Silent = 1;
@@ -1456,8 +1456,10 @@ void loop() {
     //fibonacci numbers
     char silkBuffer[6] = {0};
     if(Serial.available()>0) {
-      for(int i=0;i<sizeof(silkBuffer)-1 || Serial.available()==0;i++) {
-         silkBuffer[i] = Serial.read();
+      for(int i=0;i<sizeof(silkBuffer)-1;i++) {
+        if(Serial.available()) {
+          silkBuffer[i] = Serial.read();
+        }
       }
       //Serial.println(&silkBuffer[0]);
       uint32_t num = atoi(&silkBuffer[0]);
@@ -1502,14 +1504,14 @@ void loop() {
         }
       }
     }
-    short generations = 10+(rand()%25);
+    short generations = 50+(rand()%25);
     Display.clearDisplay();
     Display.setCursor(0,20);
     Display.print(F("Max Generations: "));
     //Display.print(F("Generations: ") );
     Display.println(generations);
     Display.display();
-    delayAndReadIR(4000);
+    delayAndReadIR(2000);
     for(int i=0;i<generations;i++) {
       int count = 0;
       Display.clearDisplay();	
