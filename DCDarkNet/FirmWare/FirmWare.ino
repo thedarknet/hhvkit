@@ -1055,20 +1055,20 @@ void setup() {
     Serial.println(F("Snoring...1"));
     sendMorse(LINE1[8]); // I
   } else if (PackedVars.LEDMode == MODE_BACKLIGHT ) {
-    Serial.println(F("BackLight...2"));
+    Serial.println(F("BackLight...7"));
     sendMorse(LINE1[18]); // S
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
-    Serial.println(F("Operative...3"));
+    Serial.println(F("Operative...2"));
     sendMorse(LINE1[19]);  //T
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
-    Serial.println(F("Uber Operative...4"));
+    Serial.println(F("Uber Operative...3"));
     sendMorse(LINE1[3]); //D
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
-    Serial.println(F("Life!...5"));
+    Serial.println(F("Life!...4"));
     srand(millis());
     
     sendMorse(LINE1[0]); //A
@@ -1077,7 +1077,7 @@ void setup() {
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
-    Serial.println(F("Operative: Crypto...6"));
+    Serial.println(F("Operative: Crypto...5"));
     sendMorse(LINE1[1]); //B
   } else if (PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
     Serial.println(F("Uber Operative: Crypto...7"));
