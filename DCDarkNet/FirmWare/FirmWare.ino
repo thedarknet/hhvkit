@@ -1086,7 +1086,7 @@ void setup() {
     Serial.println(F("Operative: Crypto...5"));
     sendMorse(LINE1[1]); //B
   } else if (PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
-    Serial.println(F("Uber Operative: Crypto...7"));
+    Serial.println(F("Uber Operative: Crypto...6"));
     sendMorse(LINE1[2]); //C
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
