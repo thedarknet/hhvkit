@@ -103,6 +103,7 @@ struct _PackedVars {
   uint32_t hasSilk3 : 1;
   uint32_t isContestRunner : 1;
   uint32_t swapKeyAndGUID : 1;
+  uint32_t modeInit : 1;
 } PackedVars;
 
 uint16_t KEY[4];
@@ -1033,6 +1034,7 @@ void setup() {
   PackedVars.hasSilk2 = 0;
   PackedVars.hasSilk3 = 0;
   PackedVars.swapKeyAndGUID = 0;
+  PackedVars.modeInit = 0;
   
   // BLINKY SHINY!  
   PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
@@ -1069,7 +1071,11 @@ void setup() {
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
     Serial.println(F("Life!...4"));
-    srand(millis());
+    if(0==PackedVars.modeInit) {
+      int seedNum = KEY[0]<<24 | KEY[1]<<16 | KEY[2] << 8 | KEY[3];
+      srand(seedNum);
+      PackedVars.modeInit = 1;
+    }
     
     sendMorse(LINE1[0]); //A
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
@@ -1504,7 +1510,7 @@ void loop() {
         }
       }
     }
-    short generations = 50+(rand()%25);
+    short generations = 100+(rand()%25);
     Display.clearDisplay();
     Display.setCursor(0,20);
     Display.print(F("Max Generations: "));
