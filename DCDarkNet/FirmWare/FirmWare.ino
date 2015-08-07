@@ -44,7 +44,7 @@ IRSerial irSerial(IR_RX, IR_TX, false, true);
 // Switch pin
 #define BUTTON_PIN 12
 
-#define BUTTON_UP        10 //which is the 16th counted pin //wont work bc also used for backlights ops!
+#define BUTTON_UP        13 //which is the 16th counted pin //wont work bc also used for backlights ops!
 #define BUTTON_LEFT      A3
 #define BUTTON_RIGHT     A0
 #define BUTTON_DOWN      A2
@@ -102,7 +102,8 @@ struct _PackedVars {
   uint32_t hasSilk2 : 1;
   uint32_t hasSilk3 : 1;
   uint32_t isContestRunner : 1;
-  uint32_t hasCompletedUberCrypto : 1;
+  uint32_t swapKeyAndGUID : 1;
+  uint32_t modeInit : 1;
 } PackedVars;
 
 uint16_t KEY[4];
@@ -140,8 +141,7 @@ DarkNetDisplay Display(OLED_RESET);
 #define TOTAL_STORAGE_SIZE_MSG (GUID_SIZE+MORSE_CODE_ENCODED_MSG)
 #define MAX_MSG_ADDR                     (TOTAL_STORAGE_SIZE_MSG*MAX_NUM_MSGS) //960
 #define START_EPIC_RUN_TIME_STORAGE       MAX_MSG_ADDR+20 //cushion 980
-#define UBER_CRYPTO_HAS_FINISED_SIG       START_EPIC_RUN_TIME_STORAGE //magic bit pattern as eeproms where not set to 0 last year.... :(
-#define UBER_CRYPTO_KEY_ADDR              UBER_CRYPTO_HAS_FINISED_SIG+4
+#define UBER_CRYTPO_CONTEST_RUNNER_ADDR   START_EPIC_RUN_TIME_STORAGE //first 8 bytes uber contest runner KEY then GUID
 #define MAX_EPIC_RUN_TIME_STORAGE         START_EPIC_RUN_TIME_STORAGE+16
 
 // END EEPROM COUNT LOCATION
@@ -199,7 +199,36 @@ unsigned char const morse[28] PROGMEM = {
   #define SERIAL_INFO(a)
 #endif
 //end debugging macros
- 
+
+
+void readContestRunnerKeyAndGUID() {
+#if MAKE_ME_A_CONTEST_RUNNER //make contest runner badge
+  // Pull GUID and Private key from EEPROM
+  for (uchar ndx = 0; ndx < 8; ndx++) {
+    GUID[ndx] = EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 8 + ndx);
+  }
+  GUID[8] = 0;
+  // Yes, this is big endian. I don't want to have to byte-swap
+  // when building the EEPROM file from text strings.
+  KEY[0] = (EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 0) << 8) + EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 1);
+  KEY[1] = (EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 2) << 8) + EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 3);
+  KEY[2] = (EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 4) << 8) + EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 5);
+  KEY[3] = (EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 6) << 8) + EEPROM.read(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 7);
+#endif
+}
+
+void readInGUIDAndKey() {
+  for (uchar ndx = 0; ndx < 8; ndx++) {
+    GUID[ndx] = EEPROM.read(GUID_ADDR + ndx);
+  }
+  GUID[8] = 0;
+  // Yes, this is big endian. I don't want to have to byte-swap
+  // when building the EEPROM file from text strings.
+  KEY[0] = (EEPROM.read(KEY_ADDR + 0) << 8) + EEPROM.read(KEY_ADDR + 1);
+  KEY[1] = (EEPROM.read(KEY_ADDR + 2) << 8) + EEPROM.read(KEY_ADDR + 3);
+  KEY[2] = (EEPROM.read(KEY_ADDR + 4) << 8) + EEPROM.read(KEY_ADDR + 5);
+  KEY[3] = (EEPROM.read(KEY_ADDR + 6) << 8) + EEPROM.read(KEY_ADDR + 7);
+}
 
 /* This is the workhorse function.  Whatever you do elsewhere,
  * When you're not working you need to call this so it looks
@@ -250,8 +279,11 @@ void delayAndReadIR(int pauseFor) {
 // to send another beacon.
 void beaconGUID(void) {
   if (millis() >= nextBeacon) {
-    if(PackedVars.Silent) {
-      SERIAL_INFO_LN(F("Ping!"));
+    if(!PackedVars.Silent) {
+      Serial.println(F("Ping!"));
+    }
+    if (1 == PackedVars.swapKeyAndGUID) {
+      readContestRunnerKeyAndGUID();
     }
     // Add a little randomness so devices don't get sync'd up.
     // Will beacon on average every 5 seconds.
@@ -426,7 +458,7 @@ int writeEEPROM(unsigned char *guid, uint8_t *msg) {
 // Our buffer only needs to be big enough to hold a staza
 // to process.  Right now (2014) that's 12 bytes.  I'm over-sizing
 // 'cuz why not?
-#define RX_BUF_SIZE 14
+#define RX_BUF_SIZE 32
 unsigned char rxBuf[RX_BUF_SIZE];
 unsigned char head;
 
@@ -515,7 +547,7 @@ unsigned char isValidWord() {
   
   // We have a good framing. Future failures will be reported.
   char c = rxBufNdx(-11);
-  if (c!='x' && c!='y' && c!='a' && c!='b' && c!='w') {
+  if (c!='x' && c!='y' && c!='a' && c!='b') {
     Serial.println(F("Bad rx header: "));
     Serial.println(c);
     return false;
@@ -554,29 +586,6 @@ unsigned char readWordFromIR() {
   return 0;
 }
 
-int weHaveSilkScreenEpic() {
-  digitalWrite(BACKLIGHT_1, HIGH);
-  Serial.println(F("weHaveSilkScreenEpic"));
-  // Read the 0w from content table.
-  uint8_t encodeBytes[4] = {0, 0, 0, 0};
-  if (!readWordFromBuf(encodeBytes)) {
-    Serial.println(F("Error reading 0w from rxBuf."));
-    return -1;
-  }
-  digitalWrite(BACKLIGHT_2, HIGH);
-
-  digitalWrite(BACKLIGHT_3, HIGH);
-  
-  uint8_t signatureBytes[4] = {'U','B','E','R'};
-  for(int i=0;i<sizeof(encodeBytes);++i) {
-    EEPROM.write(UBER_CRYPTO_KEY_ADDR+i, encodeBytes[i]);
-    EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+i,signatureBytes[i]);
-  }
-  PackedVars.hasCompletedUberCrypto = 1;
-  Serial.println(F("done weHaveSilkScreenEpic"));
-  return UBER_CRYPTO_KEY_ADDR;
-}
-
 int weAreAlice() {
   digitalWrite(BACKLIGHT_1, HIGH);
   // Read the 0y from Bob and process it.
@@ -613,7 +622,13 @@ int weAreAlice() {
   
   // Alright!  We've got everything we need!  Build a message
   *(uint32_t*)bobEnc ^= *(uint32_t*)aliceEnc;
-  return writeEEPROM(bobGUID, bobEnc);
+  int retVal =  writeEEPROM(bobGUID, bobEnc);
+
+  if (1 == PackedVars.swapKeyAndGUID) {
+    PackedVars.swapKeyAndGUID = 0;
+    readInGUIDAndKey();
+  }
+  return retVal;
 }
 
 int weAreBob() {
@@ -704,9 +719,6 @@ void processIR(unsigned char c) {
     // 0y means someone else is responding to our beacon.
     //Serial.println(F("Alice"));
     msgAddr = weAreAlice();
-  } else if (flag == 'w') {
-    //not writing another badge guid but writting key from darknet agent's badge
-    msgAddr = weHaveSilkScreenEpic();
   }
   
   unsigned char ndx;
@@ -747,21 +759,6 @@ void processIR(unsigned char c) {
 
   sendSerialTwitter(msgAddr);
   sendMorseTwitter(msgAddr);
-}
-
-void dumpCrytpoData() {
-  if(PackedVars.hasCompletedUberCrypto) {
-    char code[5] = {'\0'};
-    for(int i=0;i<4;i++) {
-      code[i] = EEPROM.read(UBER_CRYPTO_KEY_ADDR+i);
-    }
-    GenerateResponseToCorrectEpic(&code[0],!PackedVars.isContestRunner);
-  } else {
-    if(!PackedVars.isContestRunner) {
-      Display.println(F("Complete the 6 part crypto"));
-      Serial.println(F("Complete the 6 part crypto"));
-    }
-  }
 }
 
 void dumpDatabaseToSerial() {
@@ -931,6 +928,26 @@ void writeUSB(char c) {
   }
 }
 
+void BlinkMainLEDForMode(int mode) {
+  for(int i=0;i<mode;i++) {
+    digitalWrite(LED_PIN, HIGH);
+    delayAndReadIR(400);
+    digitalWrite(LED_PIN, LOW);
+    delayAndReadIR(400);
+  }
+  analogWrite(LED_PIN, 16);
+  delayAndReadIR(100);
+  analogWrite(LED_PIN, 32);
+  delayAndReadIR(100);
+  analogWrite(LED_PIN, 64);
+  delayAndReadIR(100);
+  analogWrite(LED_PIN, 128);
+  delayAndReadIR(100);
+  analogWrite(LED_PIN, 255);
+  delayAndReadIR(100);
+  digitalWrite(LED_PIN, LOW);
+}
+
 void setup() {
   // Setup various serial ports
   // Serial is used as a console.  It shows up on both the FTDI header
@@ -971,9 +988,6 @@ void setup() {
   pinMode(BUTTON_UP, INPUT);
   digitalWrite(BUTTON_UP, HIGH);  // Internal pull-up
   
-  //pinMode(BUTTON_DOWN,INPUT);
-  //analogWrite(BUTTON_DOWN,
-  
   delay(200);  // Reset "debounce"
 
   // Setup the IR buffers and timers.
@@ -981,31 +995,33 @@ void setup() {
   clearRxBuf();
   
 
-  // Pull GUID and Private key from EEPROM
-  for (uchar ndx=0; ndx < 8; ndx++) {
-    GUID[ndx] = EEPROM.read(GUID_ADDR + ndx);
-  }
-  GUID[8] = 0;
-  // Yes, this is big endian. I don't want to have to byte-swap
-  // when building the EEPROM file from text strings.
-  KEY[0] = (EEPROM.read(KEY_ADDR+0)<<8) + EEPROM.read(KEY_ADDR+1);
-  KEY[1] = (EEPROM.read(KEY_ADDR+2)<<8) + EEPROM.read(KEY_ADDR+3);  
-  KEY[2] = (EEPROM.read(KEY_ADDR+4)<<8) + EEPROM.read(KEY_ADDR+5);  
-  KEY[3] = (EEPROM.read(KEY_ADDR+6)<<8) + EEPROM.read(KEY_ADDR+7);  
+  readInGUIDAndKey();  
   
-  
-  #if MAKE_ME_A_CONTEST_RUNNER //make contest runner badge
-    Serial.println(F("making badge contest runner"));
-    PackedVars.isContestRunner = 1;
-    
-    //complete uber silk screen epic
-    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG,'U');
-    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+1,'B');
-    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+2,'E');
-    //EEPROM.write(UBER_CRYPTO_HAS_FINISED_SIG+3,'R');
-  #else
-    PackedVars.isContestRunner = 0;
-  #endif
+#if MAKE_ME_A_CONTEST_RUNNER //make contest runner badge
+  Serial.println(F("making badge contest runner"));
+  PackedVars.isContestRunner = 1;
+
+  //complete uber silk screen epic
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 0 , 'K');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 1 , 'R');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 2 , 'U');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 3 , 'X');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 4 , 'C');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 5 , 'O');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 6 , 'D');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 7 , 'E');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 8 , 'D');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 9 , 'E');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 10, 'A');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 11, 'D');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 12, '0');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 13, '9');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 14, '1');
+  EEPROM.write(UBER_CRYTPO_CONTEST_RUNNER_ADDR + 15, '1');
+#else
+  PackedVars.isContestRunner = 0;
+#endif
+
   
   //set initial Pack Vars
   PackedVars.InSerialEpic = 0; // no serial received yet so we are not on serial epic
@@ -1017,44 +1033,49 @@ void setup() {
   PackedVars.hasSilk1 = 0;
   PackedVars.hasSilk2 = 0;
   PackedVars.hasSilk3 = 0;
-  PackedVars.hasCompletedUberCrypto = EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG)=='U' &&
-    EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+1)=='B' && EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+2)=='E' && EEPROM.read(UBER_CRYPTO_HAS_FINISED_SIG+3)=='R';
-
+  PackedVars.swapKeyAndGUID = 0;
+  PackedVars.modeInit = 0;
+  
   // BLINKY SHINY!  
   PackedVars.LEDMode = EEPROM.read(RESET_STATE_ADDR)%MODE_COUNT;
   EEPROM.write(RESET_STATE_ADDR, (PackedVars.LEDMode + 1)%MODE_COUNT); 
  
   
   #if 0
-    PackedVars.LEDMode = MODE_SERIAL_EPIC;
+    PackedVars.LEDMode = MODE_DISPLAY_BOARD_EPIC;
     Serial.print(F("is contest runner: "));
     Serial.println(PackedVars.isContestRunner);
     //Serial.println(sizeof(UsbKeyboard));
     //writeNumMsgs(0);
   #endif
-  
+
+  BlinkMainLEDForMode(PackedVars.LEDMode);
   if (PackedVars.LEDMode == MODE_MORSE_CODE_EPIC) {        // Normal Morse code
-    Serial.println(F("Morse output of codes..."));
+    Serial.println(F("Morse output of codes...0"));
     sendMorse(LINE1[4]); //E
   } else if (PackedVars.LEDMode == MODE_SNORING) { // Snoring
-    Serial.println(F("Snoring..."));
+    Serial.println(F("Snoring...1"));
     sendMorse(LINE1[8]); // I
   } else if (PackedVars.LEDMode == MODE_BACKLIGHT ) {
-    Serial.println(F("BackLight"));
+    Serial.println(F("BackLight...7"));
     sendMorse(LINE1[18]); // S
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) { //epic
-    Serial.println(F("Operative"));
+    Serial.println(F("Operative...2"));
     sendMorse(LINE1[19]);  //T
   } else if (PackedVars.LEDMode == MODE_DISPLAY_BOARD_EPIC) {
-    Serial.println(F("Uber Operative"));
+    Serial.println(F("Uber Operative...3"));
     sendMorse(LINE1[3]); //D
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
-    Serial.println(F("Life!"));
-    srand(millis());
+    Serial.println(F("Life!...4"));
+    if(0==PackedVars.modeInit) {
+      int seedNum = KEY[0]<<24 | KEY[1]<<16 | KEY[2] << 8 | KEY[3];
+      srand(seedNum);
+      PackedVars.modeInit = 1;
+    }
     
     sendMorse(LINE1[0]); //A
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
@@ -1062,17 +1083,17 @@ void setup() {
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) {
-    Serial.println(F("Operative: Crypto"));
+    Serial.println(F("Operative: Crypto...5"));
     sendMorse(LINE1[1]); //B
   } else if (PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
-    Serial.println(F("Uber Operative: Crypto"));
+    Serial.println(F("Uber Operative: Crypto...6"));
     sendMorse(LINE1[2]); //C
     Display.begin(SSD1306_SWITCHCAPVCC, 0x3C);  // initialize with the I2C addr 0x3D (for the 128x64)
     Display.display();
     delayAndReadIR(3000);
     Display.clearDisplay();
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // Off
-    Serial.println(F("Shutting down..."));
+    Serial.println(F("Shutting down...8"));
     //sendMorse('M');          // --
     // Except, ya know, do it while not listening for IR.
     digitalWrite(LED_PIN, HIGH);
@@ -1140,6 +1161,28 @@ void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   memcpy(&Result[0],answer,2);
   memcpy(&Result[2],&KEY[0],8);
   memcpy(&Result[10],&GUID[0],8);
+
+#if 0
+  Serial.println(F("18 byte vector before encrypt"));
+  for(int i=0;i<sizeof(Result);i++) {
+    Serial.print(Result[i],HEX);
+  }
+  Serial.println(EMPTY_STR);
+  Serial.println(F("Key HEX"));
+  for(int i=0;i<4;i++) {
+    Serial.print(KEY[i],HEX);
+  }
+  Serial.println(EMPTY_STR);
+  Serial.println(F("Key shorts"));
+  for(int i=0;i<4;i++) {
+    Serial.print(KEY[i]);
+    Serial.print(" ");
+  }
+  Serial.println(EMPTY_STR);
+  Serial.println(F("GUID"));
+  Serial.println(&GUID[0]);
+#endif
+
   for(int i=0;i<(sizeof(Result)-4);i+=2) {
     encrypt((uint16_t*)&Result[i]);  
   }
@@ -1147,6 +1190,9 @@ void GenerateResponseToCorrectEpic(const char *answer, boolean onDisplay) {
   Serial.println(SEND_TO_DAEMON);
   if(onDisplay) Display.println(SEND_TO_DAEMON);
   for(int i=0;i<sizeof(Result);i++) {
+    if(Result[i]<16) { //otherwise we'll get just something like 6 rather than 06
+      Serial.print("0");
+    }
     Serial.print(Result[i],HEX);
     if(onDisplay) Display.print(Result[i],HEX);
   }
@@ -1255,7 +1301,7 @@ void loop() {
     // Lub
     rampLED(0, 200, 0, 0, 0, 0, 0, 0, 0, 0, 60);
     rampLED(200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120);
-    delayAndReadIR(200);
+    delayAndReadIR(400);
 
     // Dub
     //      LED  LED  BACK 1    BACK 2    BACK 3    BACK 4
@@ -1268,9 +1314,10 @@ void loop() {
     rampLED(0,   0,   100, 0,   0,   0,   0,   0,   100, 0,   500);
       
     beaconGUID();
-    delayAndReadIR(2000-(millis()-start));
+    delayAndReadIR(4000-(millis()-start));
   } else if (PackedVars.LEDMode == MODE_SERIAL_EPIC) {
     unsigned long SerialEpicTimer = millis();
+    PackedVars.Silent = 1;
     Serial.println(F("Password: "));
     while((millis()-SerialEpicTimer) < MAX_SERIAL_EPIC_TIME_MS ) { //don't loop for MAX_SERIAL_EPIC_TIME
       start = millis();
@@ -1337,18 +1384,16 @@ void loop() {
       //Serial.println(analogRead(BUTTON_RIGHT));
       //Serial.println(analogRead(BUTTON_DOWN));
       //Serial.println(analogRead(BUTTON_CENTER));
-      uint16_t b1 = ( //(digitalRead(BUTTON_UP)==LOW?:0) | 
+      uint16_t b1 = ( (digitalRead(BUTTON_UP)==LOW?:0) | 
           (analogRead(BUTTON_LEFT)<10?VLEFT:0) | 
           (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
           (analogRead(BUTTON_DOWN)<10?VDOWN:0) | 
           (analogRead(BUTTON_CENTER)<10?VCENTER:0));
       delay(4);
       
-      uint16_t button = b1 & ( //(digitalRead(BUTTON_UP)==LOW?VUP:0) | 
+      uint16_t button = b1 & ( (digitalRead(BUTTON_UP)==LOW?VUP:0) | 
         (analogRead(BUTTON_LEFT)<10?VLEFT:0) | (analogRead(BUTTON_RIGHT)<10?VRIGHT:0) | 
         (analogRead(BUTTON_DOWN)<10?VDOWN:0) | (analogRead(BUTTON_CENTER)<10?VCENTER:0));
-          
-      //Serial.println(button,BIN);
       
       if(button&VLEFT) {
         PackedVars.LINE1Loc = PackedVars.LINE1Loc==0?LINE1_LENGTH-1:PackedVars.LINE1Loc-1;
@@ -1374,13 +1419,9 @@ void loop() {
          PackedVars.LINE1Loc = 0;
       }
       
-      //Serial.println(PackedVars.LINE1Loc);
-      //Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];//pgm_read_byte(LINE1 + PackedVars.LINE1Loc);
-      
       if(button&VCENTER) {
         Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
         PackedVars.AnswerPos = (PackedVars.AnswerPos+1)>=sizeof(Answer) ? sizeof(Answer) : PackedVars.AnswerPos+1;
-        //Answer[PackedVars.AnswerPos] = LINE1[PackedVars.LINE1Loc];
       }
       
       if(strcmp(&Answer[0],&DisplayEpicAnswer[0])==0) {
@@ -1409,12 +1450,12 @@ void loop() {
         delay(20);
       }
     }
-    beaconGUID();
-    delayAndReadIR(1000);
+    //8/3 DAC turning off the ability to sync IR with another bade in this mode
+    //beaconGUID();
+    delayAndReadIR(400);
     
-    //updateQuestion(Display);
-    //updateDisplay(button,Display);
   } else if (PackedVars.LEDMode == MODE_SILK_SCREEN) { 
+    PackedVars.Silent = 1;
     if(0==count) {
       Serial.println(F("Enter the sequence: "));
     }
@@ -1422,7 +1463,9 @@ void loop() {
     char silkBuffer[6] = {0};
     if(Serial.available()>0) {
       for(int i=0;i<sizeof(silkBuffer)-1;i++) {
-         silkBuffer[i] = Serial.read();
+        if(Serial.available()) {
+          silkBuffer[i] = Serial.read();
+        }
       }
       //Serial.println(&silkBuffer[0]);
       uint32_t num = atoi(&silkBuffer[0]);
@@ -1448,7 +1491,7 @@ void loop() {
     
     drainSerial();
     beaconGUID();
-    delayAndReadIR(1000);
+    delayAndReadIR(2000);
   } else if (PackedVars.LEDMode == MODE_JUST_A_COOL_DISPLAY) {
     start = millis();
     static const int width = 32;
@@ -1467,14 +1510,14 @@ void loop() {
         }
       }
     }
-    short generations = 10+(rand()%25);
+    short generations = 100+(rand()%25);
     Display.clearDisplay();
     Display.setCursor(0,20);
     Display.print(F("Max Generations: "));
     //Display.print(F("Generations: ") );
     Display.println(generations);
     Display.display();
-    delayAndReadIR(4000);
+    delayAndReadIR(2000);
     for(int i=0;i<generations;i++) {
       int count = 0;
       Display.clearDisplay();	
@@ -1484,7 +1527,7 @@ void loop() {
             Display.drawPixel(k*4,j*2,WHITE);
             count++;
           }
- 	}
+ 	      }
       }
       if(0==count) {
         Display.setCursor(20,20);
@@ -1502,31 +1545,34 @@ void loop() {
     }
     delayAndReadIR(2000);
   } else if(PackedVars.LEDMode == MODE_UBER_BADGE_SYNC) {
+    PackedVars.Silent = 1;
     Display.clearDisplay();
-    Display.setCursor(0,0);
-    if(PackedVars.isContestRunner) {
+    Display.setCursor(0, 0);
+    if (PackedVars.isContestRunner) {
       Display.println(F("Press center button to send: "));
       Display.display();
       start = millis();
-      while((millis()-start)<2000) {
-        if(analogRead(BUTTON_CENTER)<5) {
-           delay(4);
-           //Serial.println(analogRead(BUTTON_CENTER));
-           if(analogRead(BUTTON_CENTER)<5) {
-             Display.println(F("SENDING..."));
-             Display.display();
-             irSerial.println(F("0wDEAD0911"));
-             Display.println(F("SENT!"));
-             Display.display();
-             break;
-           }
+      while ((millis() - start) < 2000) {
+        if (analogRead(BUTTON_CENTER) < 5) {
+          delay(4);
+          //Serial.println(analogRead(BUTTON_CENTER));
+          if (analogRead(BUTTON_CENTER) < 5) {
+            Display.println(F("SENDING..."));
+            Display.display();
+            PackedVars.swapKeyAndGUID = 1;
+            beaconGUID();
+            delayAndReadIR(3000);
+            Display.println(F("SENT!"));
+            Display.display();
+            break;
+          }
         }
       }
+    } else {
+      Display.println(F("Ready to receive:"));
+      Display.display();
+      delayAndReadIR(3000);
     }
-    //Display.clearDisplay();
-    dumpCrytpoData();
-    Display.display();
-    delayAndReadIR(3000);
   } else { //if (PackedVars.LEDMode == MODE_SHUTDOWN) { // We should never get here.  This is a sign we didn't sleep right.
     sendMorse('C');
   }
