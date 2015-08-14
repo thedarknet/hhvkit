@@ -6787,10 +6787,10 @@ Standard 6 pin header for AVR programming</description>
 <part name="JP21" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP22" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP23" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
-<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP26" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
-<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP28" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP29" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
 <part name="JP30" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>

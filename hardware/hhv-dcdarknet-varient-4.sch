@@ -6787,12 +6787,12 @@ Standard 6 pin header for AVR programming</description>
 <part name="JP21" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP22" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP23" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
-<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
-<part name="JP26" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
-<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP24" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP25" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
+<part name="JP26" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP27" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP28" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
-<part name="JP29" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
+<part name="JP29" library="adafruit" deviceset="PINHD-1X1" device="1X1_SQUARE"/>
 <part name="JP30" library="adafruit" deviceset="PINHD-1X1" device="1X1-SMALL"/>
 <part name="C3" library="adafruit" deviceset="C-US" device="025-030X050" value=".1uf"/>
 <part name="LED3" library="SparkFun" deviceset="LED" device="1206"/>

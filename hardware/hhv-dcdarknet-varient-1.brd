@@ -310,10 +310,10 @@ Rev 1.21.GW</text>
 <wire x1="56.276875" y1="61.198125" x2="56.515" y2="61.2775" width="0.6096" layer="41"/>
 <wire x1="56.515" y1="61.2775" x2="56.67375" y2="61.356875" width="0.6096" layer="41"/>
 <text x="46.99" y="52.3875" size="0.8128" layer="121" rot="R90">USB Tx</text>
-<text x="77.33665" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">69667
-18282
-71718
-71667</text>
+<text x="77.33665" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">40282
+24847
+96032
+00823</text>
 <wire x1="76.04125" y1="21.43125" x2="75.08875" y2="21.43125" width="0.254" layer="122"/>
 <wire x1="75.08875" y1="21.43125" x2="74.13625" y2="21.43125" width="0.254" layer="122"/>
 <wire x1="74.13625" y1="21.43125" x2="73.18375" y2="21.43125" width="0.254" layer="122"/>
@@ -447,16 +447,16 @@ Rev 1.21.GW</text>
 <vertex x="62.865" y="51.7525"/>
 <vertex x="62.865" y="52.3875"/>
 </polygon>
-<text x="70.8279" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">17185
-65867
-58278
-18586</text>
-<text x="64.31915" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">86697
-06566
-65707
-70677</text>
-<text x="57.8104" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">48269
-27789</text>
+<text x="70.8279" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">90767
+16620
+55818
+65033</text>
+<text x="64.31915" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">01925
+31722
+81249
+01564</text>
+<text x="57.8104" y="8.226425" size="1.27" layer="122" font="vector" distance="45" rot="MR0">79002
+04993</text>
 </plain>
 <libraries>
 <library name="SparkFun">
@@ -1760,10 +1760,10 @@ Please make sure your boards conform to these design rules.</description>
 <element name="JP21" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="39.37"/>
 <element name="JP22" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="36.83"/>
 <element name="JP23" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="34.29"/>
-<element name="JP24" library="adafruit" package="1X1-SMALL" value="" x="48.26" y="31.75"/>
-<element name="JP25" library="adafruit" package="1X1-SMALL" value="" x="48.26" y="29.21"/>
+<element name="JP24" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="31.75"/>
+<element name="JP25" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="29.21"/>
 <element name="JP26" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="26.67"/>
-<element name="JP27" library="adafruit" package="1X1-SMALL" value="" x="48.26" y="24.13"/>
+<element name="JP27" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="24.13"/>
 <element name="JP28" library="adafruit" package="1X1-SMALL_CUT" value="" x="48.26" y="21.59"/>
 <element name="JP29" library="adafruit" package="1X1-SMALL" value="" x="48.26" y="19.05"/>
 <element name="JP30" library="adafruit" package="1X1-SMALL" value="" x="48.26" y="16.51"/>
@@ -1779,7 +1779,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="73.43775" y="64.16675" size="0.4064" layer="28" rot="MR180"/>
 </element>
 <element name="LED5" library="SparkFun" package="LED-1206" value="" x="55.08625" y="62.38875" smashed="yes" rot="MR180">
-<attribute name="NAME" x="55.032275" y="64.468375" size="0.8128" layer="26" rot="MR180"/>
+<attribute name="NAME" x="54.873525" y="64.468375" size="0.8128" layer="26" rot="MR180"/>
 <attribute name="VALUE" x="54.07025" y="64.16675" size="0.4064" layer="28" rot="MR180"/>
 </element>
 <element name="LED6" library="SparkFun" package="LED-1206" value="" x="50.00625" y="62.38875" smashed="yes" rot="MR180">
@@ -1791,7 +1791,7 @@ Please make sure your boards conform to these design rules.</description>
 <attribute name="VALUE" x="84.582" y="64.8335" size="0.4064" layer="28" rot="MR270"/>
 </element>
 <element name="R8" library="SparkFun" package="1206" value="" x="75.8825" y="66.675" smashed="yes" rot="MR270">
-<attribute name="NAME" x="74.58075" y="66.38925" size="0.8128" layer="26" rot="MR0"/>
+<attribute name="NAME" x="74.7395" y="66.2305" size="0.8128" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="77.2795" y="67.691" size="0.4064" layer="28" rot="MR270"/>
 </element>
 <element name="R9" library="SparkFun" package="1206" value="" x="53.975" y="66.675" smashed="yes" rot="MR270">
@@ -1804,7 +1804,7 @@ Please make sure your boards conform to these design rules.</description>
 </element>
 <element name="U$1" library="SYNShop" package="DN_LOGO" value="DN_LOGO" x="58.57875" y="9.2075"/>
 <element name="U2" library="SYNShop" package="TO262-H" value="VT1045CTO262-H" x="73.025" y="34.29" smashed="yes" rot="R180">
-<attribute name="NAME" x="72.517" y="36.83" size="0.8128" layer="25"/>
+<attribute name="NAME" x="72.35825" y="40.48125" size="0.8128" layer="25"/>
 </element>
 <element name="U$2" library="SYNShop" package="CMDC0DE" value="CMDC0DE_LOGO" x="58.89625" y="55.5625" rot="MR0"/>
 <element name="U$3" library="SYNShop" package="KRUX_LOGO" value="KRUX_LOGO" x="64.77" y="69.37375" rot="MR0"/>
@@ -2459,8 +2459,8 @@ Please make sure your boards conform to these design rules.</description>
 <errors>
 <approved hash="17,41,409c849883c547c1"/>
 <approved hash="17,41,439c859882c544c1"/>
-<approved hash="18,29,a5ffb0644da20f83"/>
 <approved hash="18,29,a5a03da34e7748de"/>
+<approved hash="18,29,a5ffb0644da20f83"/>
 <approved hash="18,29,54f154c15df9a9a3"/>
 <approved hash="18,29,9e036b9f81ad8047"/>
 <approved hash="18,29,e471883713819bf5"/>
@@ -2511,27 +2511,33 @@ Please make sure your boards conform to these design rules.</description>
 <approved hash="18,29,d54ddda70b1d07fb"/>
 <approved hash="18,29,5d895f0170ea409e"/>
 <approved hash="18,29,915d169e2f3af760"/>
-<approved hash="18,29,9e1f9e80c31753b5"/>
-<approved hash="18,29,d26a43a9a03fa1c1"/>
-<approved hash="18,29,d202120dc1414288"/>
+<approved hash="18,29,0eea341434220edc"/>
 <approved hash="18,29,f6cb4c354c60f69e"/>
-<approved hash="18,29,723c2eb88d3f36c5"/>
+<approved hash="18,29,d202120dc1414288"/>
+<approved hash="18,29,a5dbfb25fb55a5ab"/>
+<approved hash="18,29,03dd1068706763d2"/>
 <approved hash="18,29,7c6b021500247e5a"/>
+<approved hash="18,29,aae8b95dd954cae1"/>
+<approved hash="18,29,d1e4de51be48b1fd"/>
 <approved hash="18,29,231ee90497f0da3a"/>
 <approved hash="18,29,e3420dbc0de4e31a"/>
-<approved hash="18,29,6839ec8f5e0ff7c7"/>
+<approved hash="18,29,9bdbf525f5509bae"/>
+<approved hash="18,29,9e1f9e80c31753b5"/>
+<approved hash="18,29,d26a43a9a03fa1c1"/>
+<approved hash="18,29,8067826064f6e4cd"/>
+<approved hash="18,29,65aee58bbd1dbf04"/>
 <approved hash="18,29,d96941aaa63ca1c3"/>
 <approved hash="18,29,9e1c9883c11558b6"/>
 <approved hash="18,29,6baf188c9e1aa004"/>
 <approved hash="18,29,9ffca1c69951ea56"/>
-<approved hash="18,29,92e24157b6ebe062"/>
-<approved hash="18,29,035699935ed693ef"/>
-<approved hash="18,29,37197f8e8b0b4b90"/>
 <approved hash="18,29,9e4b34a164065b61"/>
 <approved hash="18,29,53fa4553d22383c7"/>
 <approved hash="18,29,050bc5687fed3782"/>
-<approved hash="18,29,61a8198d9e1ba605"/>
+<approved hash="18,29,92e24157b6ebe062"/>
+<approved hash="18,29,035699935ed693ef"/>
+<approved hash="18,29,37197f8e8b0b4b90"/>
 <approved hash="18,29,99fda1c19850e057"/>
+<approved hash="18,29,61a8198d9e1ba605"/>
 <approved hash="18,29,99fa9fc69257e150"/>
 <approved hash="18,29,60af138aa01ca602"/>
 <approved hash="18,29,a765eedd769591e5"/>
@@ -2540,26 +2546,8 @@ Please make sure your boards conform to these design rules.</description>
 <approved hash="18,29,9bd424a57e7f3fd5"/>
 <approved hash="18,29,24fb6d49eba13302"/>
 <approved hash="18,29,da04d982d334a0f7"/>
-<approved hash="18,30,6b8d2abd8b788d11"/>
-<approved hash="18,30,962d922933b57350"/>
-<approved hash="18,30,9dc0384038039d83"/>
-<approved hash="18,30,98473dc73c199999"/>
-<approved hash="18,30,80ed256d25e98069"/>
-<approved hash="18,30,6a2c6e2bd7b7d750"/>
-<approved hash="18,30,9dc0f840f8049d84"/>
-<approved hash="18,30,cf8fcebc77787113"/>
-<approved hash="18,30,80443dc43c198199"/>
-<approved hash="18,30,98ee256e25e99869"/>
-<approved hash="18,30,962f9228fdb53953"/>
-<approved hash="18,30,9dc0fe40fe009d80"/>
-<approved hash="18,30,218ce4bf8b7b8d11"/>
-<approved hash="18,30,80ecef6cefeb806b"/>
-<approved hash="18,30,9846f7c6f61b999b"/>
-<approved hash="18,30,9dc0324032029d82"/>
-<approved hash="18,30,aa2fae292db55153"/>
-<approved hash="18,30,498d34bfb77bb111"/>
-<approved hash="18,30,804703c702198199"/>
-<approved hash="18,30,98ed1b6d1be99869"/>
+<approved hash="18,29,9a67986194f6e4cd"/>
+<approved hash="18,29,65af158ba71da504"/>
 <approved hash="4,1,4e81cd1565aee726"/>
 <approved hash="4,1,ca804f15e5a16726"/>
 <approved hash="4,1,d2394eaddf227f9e"/>
@@ -2599,17 +2587,17 @@ Please make sure your boards conform to these design rules.</description>
 <approved hash="5,1,03efbfb52b8cd389"/>
 <approved hash="5,1,121e399f3fe98548"/>
 <approved hash="4,16,1fd1c9e2794d74e2"/>
+<approved hash="5,16,061443fd40e90988"/>
+<approved hash="5,16,0afc4cdd4ee90bc8"/>
 <approved hash="5,16,09ec4ccd49b90ab8"/>
 <approved hash="5,16,0bec4fd54e190b18"/>
-<approved hash="5,16,0afc4cdd4ee90bc8"/>
-<approved hash="5,16,061443fd40e90988"/>
-<approved hash="5,16,0ed44acd48190ec8"/>
 <approved hash="5,16,0adc4eb54c190ac8"/>
-<approved hash="5,16,77f433d54e297718"/>
 <approved hash="5,16,0ef44cd54ef90fc8"/>
+<approved hash="5,16,0ed44acd48190ec8"/>
+<approved hash="5,16,77f433d54e297718"/>
+<approved hash="5,16,09f44cd54db90e88"/>
 <approved hash="5,16,16f44cdd4ee917d8"/>
 <approved hash="5,16,0a144ff54ce909b8"/>
-<approved hash="5,16,09f44cd54db90e88"/>
 <approved hash="4,16,4e81cd1565aee726"/>
 <approved hash="4,16,ca804f15e5a16726"/>
 <approved hash="4,16,d2394eaddf227f9e"/>
