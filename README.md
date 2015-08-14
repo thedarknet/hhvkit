@@ -142,7 +142,8 @@ https://www.mouser.com/ProjectManager/ProjectDetail.aspx?AccessID=6bc2d848d8
 
 Assembly Instructions are located here:
 
-https://dcdark.net/2014-hhv-kit/
+https://dcdark.net/2015/hhv-badge/
+https://dcdark.net/2015/hhv-display/
 
 Public and private
 ======
